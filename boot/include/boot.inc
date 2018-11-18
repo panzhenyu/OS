@@ -2,6 +2,8 @@
 LOADER_BASE_ADDR equ 0x900			; loader基地址，是实模式下内存中某可用区域，容量较大，10K级别
 LOADER_START_SECTOR equ 0x2			; loader起始扇区
 PAGE_DIR_TABLE_POS equ 0x100000			; 页目录表基地址
+KERNEL_START_SECTOR equ 0x9
+KERNEL_BIN_BASE_ADDR equ 0x70000
 
 ;GDT描述符属性
 DESC_G_4K equ 1_00000000000000000000000b
