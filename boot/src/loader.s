@@ -146,19 +146,20 @@ p_mode_start:
 	or dword [ebx + 0x18 + 4], 0xc0000000		; 更正视频段段基址
 	add dword [gdt_ptr + 2], 0xc0000000		; 更正gdt表首地址
 	add esp, 0xc0000000				; 更正栈指针
-
 	mov eax, PAGE_DIR_TABLE_POS
 	mov cr3, eax					; 将页目录基地址给cr3
-
 	mov eax, cr0
 	or eax, 0x80000000
 	mov cr0, eax					; 打开cr0的pg位，开启分页模式
-
 	lgdt [gdt_ptr]					; 重新加载
+	jmp SELECTOR_CODE:enter_kernel
 
+enter_kernel:
 	mov byte [gs:160], 'V'
+	call kernel_init
+	mov esp, 0xc009f000				; 栈基址移到可用区域
+	jmp KERNEL_ENTRY_POINT
 
-	jmp $
 
 ;创建页目录及页表，清零页目录项的所占的内存区，设置了第一个页目录项和内核区页目录项，将0-1M内存地址写入第一张页表
 setup_page:
