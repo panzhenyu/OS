@@ -36,76 +36,7 @@ LOADER_STACK_TOP equ LOADER_BASE_ADDR
 	ards_nr dw 0					; 用于记录ARDS结构体数量
 
 loader_start:
-;int 0x15 EAX=0x0000E820 EDX=534D4150h('SMAP') 获得内存布局
-	xor ebx, ebx					; 第一次调用时，EBX要为0
-	mov edx, 0x534d4150
-	mov di, ards_buf
-.e820_mem_get_loop:
-	mov eax, 0x0000e820
-	mov ecx, 20					; ARDS描述符大小为20字节
-	int 0x15
-	jc .e820_failed_so_try_e801
-	add di, cx					; 使di缓冲区增加20字节指向缓冲区中新的ARDS结构位置
-	inc word [ards_nr]
-	cmp ebx, 0					; 若ebx为0且cf不为1，说明ards全部返回
-	jnz .e820_mem_get_loop
-;在所有ards结构中，找出[base_add_low + length_low]的最大值，即内存的容量
-	mov cx, [ards_nr]
-	mov ebx, ards_buf
-	xor edx, edx					; 用于保存最大内存容量
-.find_max_mem_area:
-	mov eax, [ebx]					; base_add_low
-	add eax, [ebx+8]				; length_low
-	add ebx, 20
-	cmp edx, eax
-	jge .next_ards
-	mov edx, eax
-.next_ards:
-	loop .find_max_mem_area
-	jmp .mem_get_ok
-
-;int 0x15 AX=0xE801 获取内存大小，最大支持4G
-;返回后，AX与CX相等，以1KB为单位，BX和DX相等，以64KB为单位
-.e820_failed_so_try_e801:
-;1 计算低15M内存
-	mov eax, 0xe801
-	int 0x15
-	jc .e801_failed_so_try_88
-	mov cx, 0x400					; 单位转换为byte，乘以1k
-	mul cx
-	shl edx, 16
-	and eax, 0x0000ffff
-	or edx, eax
-	add edx, 0x100000				; ax只是15M,因此增加1M
-	mov esi, edx					; 备份
-;2 计算16M以上的内存
-	xor eax, eax
-	mov ax, bx
-	mov ecx, 0x10000				; 单位转换为byte，乘以64k
-	mul ecx
-	add esi, eax
-	mov edx, esi
-	jmp .mem_get_ok
-
-;int 0x15 AX=0x88 获取内存大小，最大支持64M
-.e801_failed_so_try_88:
-	mov ah, 0x88
-	int 0x15
-	jc .error_hlt
-	and eax, 0x0000ffff
-	mov cx, 0x400
-	mul cx						; 16位乘法，高16位位于dx，低16位位于ax
-	shl edx, 16
-	or edx, eax
-	add edx, 0x100000
-	jmp .mem_get_ok
-
-.error_hlt:
-	hlt
-
-.mem_get_ok:
-	mov [total_mem_bytes], edx			; 将内存大小(单位:byte)存入total_mem_bytes处
-
+	call get_mem_size
 ;开启保护模式
 ;1 打开A20
 	in al, 0x92
@@ -121,7 +52,6 @@ loader_start:
 	mov cr0, eax
 
 	jmp dword SELECTOR_CODE:p_mode_start		; 刷新流水线
-
 
 [bits 32]
 p_mode_start:
@@ -297,4 +227,78 @@ mem_cpy:
 	rep movsb
 	pop ecx
 	pop ebp				; 该过程只压入ecx，弹出后栈已平衡，可以直接恢复栈帧
+	ret
+
+
+[bits 16]
+;int 0x15 EAX=0x0000E820 EDX=534D4150h('SMAP') 获得内存布局
+get_mem_size:
+	xor ebx, ebx					; 第一次调用时，EBX要为0
+	mov edx, 0x534d4150
+	mov di, ards_buf
+.e820_mem_get_loop:
+	mov eax, 0x0000e820
+	mov ecx, 20					; ARDS描述符大小为20字节
+	int 0x15
+	jc .e820_failed_so_try_e801
+	add di, cx					; 使di缓冲区增加20字节指向缓冲区中新的ARDS结构位置
+	inc word [ards_nr]
+	cmp ebx, 0					; 若ebx为0且cf不为1，说明ards全部返回
+	jnz .e820_mem_get_loop
+;在所有ards结构中，找出[base_add_low + length_low]的最大值，即内存的容量
+	mov cx, [ards_nr]
+	mov ebx, ards_buf
+	xor edx, edx					; 用于保存最大内存容量
+.find_max_mem_area:
+	mov eax, [ebx]					; base_add_low
+	add eax, [ebx+8]				; length_low
+	add ebx, 20
+	cmp edx, eax
+	jge .next_ards
+	mov edx, eax
+.next_ards:
+	loop .find_max_mem_area
+	jmp .mem_get_ok
+
+;int 0x15 AX=0xE801 获取内存大小，最大支持4G
+;返回后，AX与CX相等，以1KB为单位，BX和DX相等，以64KB为单位
+.e820_failed_so_try_e801:
+;1 计算低15M内存
+	mov eax, 0xe801
+	int 0x15
+	jc .e801_failed_so_try_88
+	mov cx, 0x400					; 单位转换为byte，乘以1k
+	mul cx
+	shl edx, 16
+	and eax, 0x0000ffff
+	or edx, eax
+	add edx, 0x100000				; ax只是15M,因此增加1M
+	mov esi, edx					; 备份
+;2 计算16M以上的内存
+	xor eax, eax
+	mov ax, bx
+	mov ecx, 0x10000				; 单位转换为byte，乘以64k
+	mul ecx
+	add esi, eax
+	mov edx, esi
+	jmp .mem_get_ok
+
+;int 0x15 AX=0x88 获取内存大小，最大支持64M
+.e801_failed_so_try_88:
+	mov ah, 0x88
+	int 0x15
+	jc .error_hlt
+	and eax, 0x0000ffff
+	mov cx, 0x400
+	mul cx						; 16位乘法，高16位位于dx，低16位位于ax
+	shl edx, 16
+	or edx, eax
+	add edx, 0x100000
+	jmp .mem_get_ok
+
+.error_hlt:
+	hlt
+
+.mem_get_ok:
+	mov [total_mem_bytes], edx			; 将内存大小(单位:byte)存入total_mem_bytes处
 	ret
