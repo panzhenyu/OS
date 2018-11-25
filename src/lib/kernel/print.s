@@ -44,8 +44,9 @@ put_char:
 	add bx, 80				; 跳到下一行，换行结束
 	cmp bx, 2000				; 判断是否超出页边界
 	jl .set_cursor
+	jmp .roll_screen
 
-.is_breakspace:
+.is_backspace:
 	dec bx
 	shl bx, 1
 	mov byte [gs:bx], 0x20
@@ -67,8 +68,8 @@ put_char:
 .roll_screen:
 	cld
 	mov ecx, 960
-	lea esi, [gs:0x00]			; 第0行行首
-	lea edi, [gs:0xa0]			; 第1行行首，注意每个字符占两字节(高字节为显示属性)
+	mov esi, 0xc00b80a0			; 第1行行首，注意每个字符占两字节(高字节为显示属性)，不可写为 lea esi, [gs:0xa0]，原因不明
+	mov edi, 0xc00b8000			; 第0行行首，注意每个字符占两字节(高字节为显示属性)
 	rep movsd
 
 	mov ebx, 3840				; 第24行行首
@@ -90,10 +91,89 @@ put_char:
 	mov dx, 0x03d4
 	mov al, 0x0f
 	out dx, al
-	mov dx 0x03d5
+	mov dx, 0x03d5
 	mov al, bl
 	out dx, al				; 设置低八位
 
 .put_char_done:
 	popad
+	ret
+
+global put_str
+put_str:
+	push ebx
+	push ecx
+	xor ecx, ecx
+	mov ebx, [esp+12]
+
+.next_char:
+	mov cl, [ebx]
+	cmp cl, 0				; 遇到\0结束
+	jz .put_str_done
+	push ecx
+	call put_char
+	add esp, 4				; 恢复栈
+	inc ebx
+	jmp .next_char
+
+.put_str_done:
+	pop ecx
+	pop ebx
+	ret
+
+global put_int32
+put_int32:
+	push eax				; eax存放要打印的32位整数
+	push ebx
+	push ecx				; ecx存放要打印的字符
+	push edx
+	push esi				; 存放位数
+
+	mov eax, [esp+24]
+	mov ebx, 10				; 除数
+	xor esi, esi				; 个数初始化为0
+
+	cmp eax, 0
+	jg .get_num
+	jz .get_zero
+	mov ecx, '-'				; 负数则先打印负号
+	push ecx
+	call put_char
+	add esp, 4
+	neg eax					; 负数转正数
+
+.get_num:
+	cmp eax, 0
+	jz .put_num
+	xor edx, edx				; 32位除法每次需将edx置0
+	idiv ebx
+	mov ecx, edx
+	add ecx, 0x30				; 转为ascii码
+	push ecx				; 压栈
+	inc esi					; 记录个数
+	jmp .get_num
+
+.get_zero:
+	mov ecx, '0'
+	push ecx
+	inc esi
+
+.put_num:
+	cmp esi, 0
+	jz .put_int_done
+	call put_char
+	add esp, 4
+	dec esi
+	jmp .put_num
+
+.put_int_done:
+	pop esi
+	pop edx
+	pop ecx
+	pop ebx
+	pop eax
+	ret
+
+global put_uint32_hex
+put_uint32_hex:
 	ret
