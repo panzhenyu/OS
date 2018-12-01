@@ -174,6 +174,30 @@ put_int32:
 	pop eax
 	ret
 
-global put_uint32_hex
+global put_uint32_hex				; 目前缺陷，没有检查参数的正负
 put_uint32_hex:
+	push eax				; eax保存要以16进制显示的32位正整数
+	push ebx				; ebx保存要当前十六进制数的ascii码
+	push ecx				; CH保存移动的次数，CL保存一次移动的位数
+	mov eax, [esp+16]
+	xor ebx, ebx
+	mov cl, 4
+	mov ch, 8
+.next_hex:
+	rol eax, cl
+	mov bl, al
+	and bl, 0x0f				; 取低四位
+	add ebx, 0x30				; 转ascii码
+	cmp ebx, 0x3a
+	jl .print				; 0x30-0x39为数字
+	add ebx, 0x07				; 0x41-0x46为A-F
+.print:
+	push ebx
+	call put_char
+	add esp, 4
+	dec ch
+	jnz .next_hex
+	pop ecx
+	pop ebx
+	pop eax
 	ret
