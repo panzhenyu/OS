@@ -1,6 +1,7 @@
 #include "interrupt.h"
 #include "stdint.h"
 #include "global.h"
+#include "print.h"
 #include "io.h"
 
 #define PIC_M_CTRL 0x20				// 主片的控制端口
@@ -17,7 +18,7 @@ struct gate_desc
 	uint8_t dcount;				// 门描述符中第四字节
 	uint8_t attribute;			// 中断门属性
 	uint16_t func_offset_high_word;		// 中断处理程序入口地址高16位
-}
+};
 
 static void make_idt_desc(struct gate_desc* p_gdesc, uint8_t attr, intr_handler function);
 static struct gate_desc idt[IDT_DESC_CNT];		// 中断描述符表
