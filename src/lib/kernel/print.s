@@ -176,28 +176,42 @@ put_int32:
 
 global put_uint32_hex				; 目前缺陷，没有检查参数的正负
 put_uint32_hex:
+	push ebp
+	mov ebp, esp
 	push eax				; eax保存要以16进制显示的32位正整数
-	push ebx				; ebx保存要当前十六进制数的ascii码
+	push ebx				; ebx保存当前十六进制数的ascii码
 	push ecx				; CH保存移动的次数，CL保存一次移动的位数
-	mov eax, [esp+16]
+	push edx				; dl为1时开始方可打印
+	mov eax, [ebp+8]
 	xor ebx, ebx
 	mov cl, 4
 	mov ch, 8
+	xor edx, edx
 .next_hex:
 	rol eax, cl
 	mov bl, al
 	and bl, 0x0f				; 取低四位
+	cmp bl, 0
+	jz .not_set
+	mov dl, 1
+.not_set:
 	add ebx, 0x30				; 转ascii码
 	cmp ebx, 0x3a
 	jl .print				; 0x30-0x39为数字
 	add ebx, 0x07				; 0x41-0x46为A-F
 .print:
+	cmp dl, 0
+	jz .goto_next
 	push ebx
 	call put_char
 	add esp, 4
+.goto_next:
 	dec ch
 	jnz .next_hex
+	pop edx
 	pop ecx
 	pop ebx
 	pop eax
+	mov esp, ebp
+	pop ebp
 	ret

@@ -20,8 +20,9 @@ struct gate_desc
 	uint16_t func_offset_high_word;		// 中断处理程序入口地址高16位
 };
 
-static void make_idt_desc(struct gate_desc* p_gdesc, uint8_t attr, intr_handler function);
 static struct gate_desc idt[IDT_DESC_CNT];		// 中断描述符表
+char* intr_name[IDT_DESC_CNT];				// 用于保存异常的名字
+intr_handler idt_table[IDT_DESC_CNT];			// 中断处理程序数组
 extern intr_handler intr_entry_table[IDT_DESC_CNT];	// 中断程序入口地址数组
 
 static void make_idt_desc(struct gate_desc* p_gdesc, uint8_t attr, intr_handler function)
@@ -65,11 +66,52 @@ static void pic_init()
 	put_str("   pic_init done\n");
 }
 
+//通用的中断处理程序，需传入中断调用号
+static void general_intr_handler(uint8_t vec_nr)
+{
+	if(vec_nr == 0x27 || vec_nr == 0x2f)
+		return;
+	put_str("int vector : 0x");
+	put_uint32_hex(vec_nr);
+	put_char('\n');
+}
+
+static void exception_init()
+{
+	int i;
+	for(i=0;i<IDT_DESC_CNT;i++)
+	{
+		idt_table[i] = general_intr_handler;
+		intr_name[i] = "unknown";
+	}
+	intr_name[0] = "#DE Divide Error";
+	intr_name[1] = "#DB Debug Exception";
+	intr_name[2] = "NMI Interrupt";
+	intr_name[3] = "#BP Breakpoint Exception";
+	intr_name[4] = "#OF Overflow Exception";
+	intr_name[5] = "#BR BOUND Range Exceeded Exception";
+	intr_name[6] = "#UD Invalid Opcode Exception";
+	intr_name[7] = "#NM Device Not Avaliable Exception";
+	intr_name[8] = "#DF Double Fault Exception";
+	intr_name[9] = "Coprocessor Segment Overrun";
+	intr_name[10] = "#TS Invalid TSS Exception";
+	intr_name[11] = "#NP Segment Not Present";
+	intr_name[12] = "#SS Stack Fault Exception";
+	intr_name[13] = "#GP General Protection Exception";
+	intr_name[14] = "#PF Page_Fault Exception";
+	intr_name[16] = "#MF x87 FPU Floating-Point Error";
+	intr_name[17] = "#AC Alignment Check Exception";
+	intr_name[18] = "#MC Machine-Check Exception";
+	intr_name[19] = "#XF SIMD Floating-Point Exception";
+}
+
 void idt_init()
 {
 	put_str("idt_init start\n");
 	idt_desc_init();			// 初始化中断描述符表
+	exception_init();			// 注册中断处理函数及异常名称
 	pic_init();				// 初始化8295A
+
 	uint64_t idt_operand = ((sizeof(idt)-1) | ((uint64_t)((uint32_t)idt << 16)));		// 低16位为表界限，高32位为表基址
 	asm volatile("lidt %0" : : "m" (idt_operand));
 	put_str("idt_init done\n");

@@ -2,6 +2,7 @@
 %define ERROR_CODE nop
 
 extern put_str;
+extern idt_table;
 
 section .data
 	intr_str db "interrupt occcur!", 0xa, 0
@@ -13,21 +14,36 @@ intr_entry_table:
 section .text
 intr%1entry:
 	%2
-	push intr_str
-	call put_str
-	add esp, 4			; 平衡栈
+	push ds
+	push es
+	push fs
+	push gs
+	pushad
 
-	mov al, 0x20
+	mov al, 0x20			; 为什么不放在call后面?
 	out 0xa0, al
 	out 0x20, al
 
-	add esp, 4			; 跳过错误码
-	iret
+	push %1				; 通用的中断处理程序需要中断号作为参数
+	call [idt_table + %1 * 4]
+	jmp intr_exit
 
 section .data
 	dd intr%1entry
 
 %endmacro
+
+section .text
+global intr_exit
+intr_exit:
+	add esp, 4			; 跳过中断号
+	popad
+	pop gs
+	pop fs
+	pop es
+	pop ds
+	add esp, 4			; 跳过错误码
+	iretd
 
 VECTOR 0x00, ZERO
 VECTOR 0x01, ZERO
