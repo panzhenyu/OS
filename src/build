@@ -1,10 +1,10 @@
 nasm 	-f bin\
-	-I boot/include/\
+	-I include/boot/\
 	-o ../bin/boot/mbr.bin\
 	boot/mbr.s
 
 nasm 	-f bin\
-	-I boot/include/\
+	-I include/boot/\
 	-o ../bin/boot/loader.bin\
 	boot/loader.s
 
@@ -16,20 +16,25 @@ nasm	-f elf32\
 	-o ../bin/kernel/kernel.o\
 	kernel/kernel.s
 
-gcc	-I lib/ -I lib/kernel/\
+gcc	-I include/lib/ -I include/lib/kernel/ -I include/kernel/ -I include/device/\
 	-o ../bin/kernel/main.o\
 	-m32 -c -fno-builtin\
 	kernel/main.c
 
-gcc	-I lib/	-I lib/kernel/ -I kernel/\
+gcc	-I include/lib/	-I include/lib/kernel/ -I include/kernel/ -I include/device/\
 	-o ../bin/kernel/init.o\
 	-m32 -c -fno-builtin\
 	kernel/init.c
 
-gcc	-I lib/	-I lib/kernel/ -I kernel/\
+gcc	-I include/lib/	-I include/lib/kernel/ -I include/kernel/\
 	-o ../bin/kernel/interrupt.o\
 	-m32 -c -fno-builtin\
 	kernel/interrupt.c
+
+gcc	-I include/lib/ -I include/lib/kernel/ -I include/kernel/ -I include/device/\
+	-o ../bin/device/timer.o\
+	-m32 -c -fno-builtin\
+	device/timer.c
 
 cd ../bin
 
@@ -40,6 +45,7 @@ ld	-m elf_i386\
 	kernel/main.o\
 	kernel/init.o\
 	kernel/interrupt.o\
+	device/timer.o\
 	lib/kernel/print.o\
 	kernel/kernel.o
 
