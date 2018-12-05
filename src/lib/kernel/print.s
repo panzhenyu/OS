@@ -181,7 +181,7 @@ put_uint32_hex:
 	push eax				; eax保存要以16进制显示的32位正整数
 	push ebx				; ebx保存当前十六进制数的ascii码
 	push ecx				; CH保存移动的次数，CL保存一次移动的位数
-	push edx				; dl为1时开始方可打印
+	push edx				; dl为1时可以打印
 	mov eax, [ebp+8]
 	xor ebx, ebx
 	mov cl, 4
@@ -190,24 +190,30 @@ put_uint32_hex:
 .next_hex:
 	rol eax, cl
 	mov bl, al
-	and bl, 0x0f				; 取低四位
+	and bl, 0x0f
 	cmp bl, 0
 	jz .not_set
 	mov dl, 1
 .not_set:
+	cmp dl, 1
+	jnz .condition
 	add ebx, 0x30				; 转ascii码
 	cmp ebx, 0x3a
 	jl .print				; 0x30-0x39为数字
 	add ebx, 0x07				; 0x41-0x46为A-F
 .print:
-	cmp dl, 0
-	jz .goto_next
 	push ebx
 	call put_char
 	add esp, 4
-.goto_next:
+.condition:
 	dec ch
 	jnz .next_hex
+	cmp dl, 0				; 检查是否全0
+	jnz .exit
+	push 0x30
+	call put_char
+	add esp, 4
+.exit:
 	pop edx
 	pop ecx
 	pop ebx
