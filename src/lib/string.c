@@ -31,7 +31,7 @@ void memcpy(void* dst, const void* src, uint32_t size)
 }
 
 //比较m1与m2起始处连续的size个内存的大小，m1 > m2时返回1，相等时返回0，否则返回-1
-uint8_t memcmp(const void* m1, const void* m2, uint32_t size)
+int memcmp(const void* m1, const void* m2, uint32_t size)
 {
 	ASSERT(m1 != NULL && m2 != NULL);
 	const uint8_t *pm1 = (uint8_t*)m1, *pm2 = (uint8_t*)m2;
@@ -55,7 +55,7 @@ char* strcpy(char* dst, const char* src)
 }
 
 //比较两个字符串，s1中的字符大于s2中的字符时返回1，相等时返回0，否则返回-1
-int8_t strcmp(const char* s1, const char* s2)
+int strcmp(const char* s1, const char* s2)
 {
 	ASSERT(s1 != NULL && s2 != NULL);
 	while(*s1 && *s1++ == *s2++);
@@ -116,4 +116,13 @@ uint32_t strchrs(const char* str, uint8_t ch)
 		p++;
 	}
 	return ch_cnt;
+}
+
+//返回字符串长度
+uint32_t strlen(const char* str)
+{
+	ASSERT(str != NULL);
+	const char* p = str;
+	while(*p++);				// 空循环体减少执行的指令数，效率更高，因此不采用整型变量计数
+	return (uint32_t)(p - str - 1);
 }

@@ -10,13 +10,13 @@ void memset(void* dst, uint8_t value, uint32_t size);
 void memcpy(void* dst, const void* src, uint32_t size);
 
 //比较m1与m2起始处连续的size个内存的大小，m1 > m2时返回1，相等时返回0，否则返回-1
-uint8_t memcmp(const void* m1, const void* m2, uint32_t size);
+int memcmp(const void* m1, const void* m2, uint32_t size);
 
 //将字符串从src复制到dst
 char* strcpy(char* dst, const char* src);
 
 //比较两个字符串，s1中的字符大于s2中的字符时返回1，相等时返回0，否则返回-1
-int8_t strcmp(const char* s1, const char* s2);
+int strcmp(const char* s1, const char* s2);
 
 //将src拼接到dst后
 char* strcat(char* dst, const char* src);

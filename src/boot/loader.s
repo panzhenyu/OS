@@ -91,7 +91,7 @@ enter_kernel:
 	jmp KERNEL_ENTRY_POINT
 
 
-;创建页目录及页表，清零页目录项的所占的内存区，设置了第一个页目录项和内核区页目录项，将0-1M内存地址写入第一张页表
+;创建页目录及页表，清零页目录项的所占的内存区，设置了第一个页目录项和内核区页目录项，将0-1M内存地址写入第一张页表，页目录项和页表项大小都为4B
 setup_page:
 	mov ecx, 4096
 	mov esi, 0
@@ -103,7 +103,7 @@ setup_page:
 ;创建页目录项(PDE)
 .create_pde:
 	mov eax, PAGE_DIR_TABLE_POS
-	add eax, 0x1000					; 第一个页表位置及属性
+	add eax, 0x1000					; 第一个页表位置及属性,页目录表总大小4KB以后的位置
 	mov ebx, eax					; 为create_pte做准备，ebx为基地址
 
 	or eax, PG_US_U | PG_RW_W | PG_P
@@ -124,7 +124,7 @@ setup_page:
 
 ;创建内核以其他页表的pde
 	mov eax, PAGE_DIR_TABLE_POS
-	add eax, 2000					; 第二个页表位置及属性
+	add eax, 0x2000					; 第二个页表位置及属性
 	or eax, PG_US_U | PG_RW_W | PG_P
 	mov ebx, PAGE_DIR_TABLE_POS
 	mov ecx, 254					; 由于最后一个页目录项是页目录首项，且内核空间起始目录项已指向第一个页表，因此为256-2=254

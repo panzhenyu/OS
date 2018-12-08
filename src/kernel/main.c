@@ -8,6 +8,7 @@ int main()
 	init_all();
 	asm volatile("sti");		// 临时开中断
 	ASSERT(1==2);
+	put_str("after a failed assert!\n");
 	while(1);
 	return 0;
 }
