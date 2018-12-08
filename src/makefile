@@ -32,8 +32,9 @@ $(BUILD_DIR)/interrupt.o: kernel/interrupt.c $(GLOBAL_HEADER)\
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/memory.o: kernel/memory.c $(GLOBAL_HEADER)\
-	include/lib/kernel/print.h\
-	include/kernel/memory.h
+	include/lib/string.h\
+	include/lib/kernel/print.h include/lib/kernel/bitmap.h\
+	include/kernel/memory.h include/kernel/debug.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/timer.o: device/timer.c $(GLOBAL_HEADER)\
