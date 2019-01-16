@@ -116,7 +116,7 @@ static void* vaddr_get(enum pool_flags pf, uint32_t pg_cnt)
 }
 
 /*一次申请一个物理页，申请失败返回NULL，申请成功返回页的起始物理地址*/
-static void* paddr_get(struct pool* m_pool)
+static void* palloc(struct pool* m_pool)
 {
 	int bit_idx = bitmap_scan(&m_pool->pool_bitmap, 1);
 	if(bit_idx == -1)
@@ -126,3 +126,58 @@ static void* paddr_get(struct pool* m_pool)
 	return (void*)page_phyaddr;
 }
 
+/*用于做虚拟页到物理页的映射*/
+static void page_table_add(void* _vaddr, void* _page_phyaddr)
+{
+	uint32_t vaddr = (uint32_t)_vaddr, page_phyaddr = (uint32_t)_page_phyaddr;
+	uint32_t* pde = pde_ptr(vaddr);
+	uint32_t* pte = pte_ptr(vaddr);
+	// 判别pde是否存在，第0位为存在位，若不存在，则在内核空间分配一页当做页表
+	if(*pde & 0x00000001)
+	{
+		ASSERT(!(*pte & 0x00000001));
+		if(*pte & 0x00000001)
+			PANIC("pte repeat");
+		*pte = page_phyaddr | PG_US_U | PG_RW_W | PG_P_1;
+	}
+	else
+	{
+		uint32_t pde_phyaddr = (uint32_t)palloc(&kernel_pool);
+		if(pde_phyaddr == NULL)
+			return;
+		*pde = pde_phyaddr | PG_US_U | PG_RW_W | PG_P_1;
+		memset((void*)((int)pte & 0xfffff000), 0, PG_SIZE);
+		ASSERT(!(*pte & 0x00000001));
+		*pte = page_phyaddr | PG_US_U | PG_RW_W | PG_P_1;
+	}
+}
+
+void* malloc_page(enum pool_flags pf, uint32_t cnt)
+{
+	struct pool* mem_pool = pf == PF_KERNEL ? &kernel_pool : &user_pool;
+	void* vaddr_start = vaddr_get(pf, cnt);
+	if(vaddr_start == NULL)
+		return NULL;
+	uint32_t vaddr = (uint32_t)vaddr_start;
+	void* page_phyaddr;
+	while(cnt-- > 0)
+	{
+		page_phyaddr = palloc(mem_pool);
+		if(page_phyaddr == NULL)
+		{
+			// 回滚所有已分配的页
+			return NULL;
+		}
+		page_table_add((void*)vaddr, page_phyaddr);
+		vaddr += PG_SIZE;
+	}
+	return vaddr_start;
+}
+
+void* get_kernel_pages(uint32_t pg_cnt)
+{
+	void* vaddr = malloc_page(PF_KERNEL, pg_cnt);
+	if(vaddr != NULL)
+		memset(vaddr, 0, PG_SIZE * pg_cnt);
+	return vaddr;
+}
