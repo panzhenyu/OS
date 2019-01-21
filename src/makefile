@@ -10,9 +10,8 @@ ASFLAGS = -f elf32
 CFLAGS = -Wall $(LIB) -c -m32 -fno-builtin
 LDFLAGS = -m elf_i386 -Ttext $(ENTRY_POINT) -e main -Map $(BUILD_DIR)/kernel.map
 OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o\
-       $(BUILD_DIR)/interrupt.o $(BUILD_DIR)/memory.o $(BUILD_DIR)/timer.o\
-       $(BUILD_DIR)/string.o\
-       $(BUILD_DIR)/kernel.o $(BUILD_DIR)/print.o $(BUILD_DIR)/debug.o $(BUILD_DIR)/bitmap.o
+       $(BUILD_DIR)/interrupt.o $(BUILD_DIR)/memory.o $(BUILD_DIR)/timer.o $(BUILD_DIR)/thread.o\
+       $(BUILD_DIR)/kernel.o $(BUILD_DIR)/print.o $(BUILD_DIR)/debug.o $(BUILD_DIR)/bitmap.o $(BUILD_DIR)/string.o
 
 ## build c code
 $(BUILD_DIR)/main.o: kernel/main.c $(GLOBAL_HEADER)\
@@ -56,6 +55,11 @@ $(BUILD_DIR)/bitmap.o: lib/kernel/bitmap.c $(GLOBAL_HEADER)\
 	include/lib/string.h\
 	include/lib/kernel/bitmap.h\
 	include/kernel/debug.h
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/thread.o: kernel/thread.c $(GLOBAL_HEADER)\
+	include/lib/string.h\
+	include/kernel/memory.h include/kernel/thread.h
 	$(CC) $(CFLAGS) $< -o $@
 
 ## build asm code
