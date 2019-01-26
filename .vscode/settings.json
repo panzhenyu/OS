@@ -2,6 +2,11 @@
     "files.associations": {
         "stdint.h": "c",
         "memory.h": "c",
-        "print.h": "c"
+        "print.h": "c",
+        "global.h": "c",
+        "thread.h": "c",
+        "bitmap.h": "c",
+        "string.h": "c",
+        "debug.h": "c"
     }
 }

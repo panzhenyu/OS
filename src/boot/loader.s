@@ -88,7 +88,7 @@ enter_kernel:
 	mov byte [gs:160], 'V'
 	call kernel_init
 	mov esp, 0xc009f000				; 栈基址移到可用区域
-	jmp KERNEL_ENTRY_POINT
+	jmp [KERNEL_BIN_BASE_ADDR + 24]	; elf32程序入口点地址
 
 
 ;创建页目录及页表，清零页目录项的所占的内存区，设置了第一个页目录项和内核区页目录项，将0-1M内存地址写入第一张页表，页目录项和页表项大小都为4B
@@ -196,7 +196,7 @@ kernel_init:
 	xor ecx, ecx			; ecx记录程序头表中的program header数量
 	xor edx, edx			; edx记录program header的尺寸
 
-	mov dx, [KERNEL_BIN_BASE_ADDR + 42]	; program header大小
+	mov dx, [KERNEL_BIN_BASE_ADDR + 42]		; program header大小
 	mov ebx, [KERNEL_BIN_BASE_ADDR + 28]	; 第一个program header在文件中的偏移量
 	add ebx, KERNEL_BIN_BASE_ADDR
 	mov cx, [KERNEL_BIN_BASE_ADDR + 44]

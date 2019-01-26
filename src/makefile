@@ -1,5 +1,5 @@
 BUILD_DIR = ./build
-HD_DIR = /home/panda/Desktop/bochs/disk/hd60M.img
+HD = /home/panda/Desktop/bochs/disk/hd60M.img
 ENTRY_POINT = 0xc0001500
 AS = nasm
 CC = gcc
@@ -11,7 +11,7 @@ CFLAGS = -Wall $(LIB) -c -m32 -fno-builtin
 LDFLAGS = -m elf_i386 -Ttext $(ENTRY_POINT) -e main -Map $(BUILD_DIR)/kernel.map
 OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o\
        $(BUILD_DIR)/interrupt.o $(BUILD_DIR)/memory.o $(BUILD_DIR)/timer.o $(BUILD_DIR)/thread.o\
-       $(BUILD_DIR)/kernel.o $(BUILD_DIR)/print.o $(BUILD_DIR)/debug.o $(BUILD_DIR)/bitmap.o $(BUILD_DIR)/string.o
+       $(BUILD_DIR)/kernel.o $(BUILD_DIR)/print.o $(BUILD_DIR)/debug.o $(BUILD_DIR)/bitmap.o $(BUILD_DIR)/string.o $(BUILD_DIR)/list.o
 
 ## build c code
 $(BUILD_DIR)/main.o: kernel/main.c $(GLOBAL_HEADER)\
@@ -62,7 +62,18 @@ $(BUILD_DIR)/thread.o: kernel/thread.c $(GLOBAL_HEADER)\
 	include/kernel/memory.h include/kernel/thread.h
 	$(CC) $(CFLAGS) $< -o $@
 
+$(BUILD_DIR)/list.o: lib/kernel/list.c $(GLOBAL_HEADER)\
+	include/lib/kernel/list.h\
+	include/kernel/interrupt.h include/kernel/debug.h
+	$(CC) $(CFLAGS) $< -o $@
+
 ## build asm code
+$(BUILD_DIR)/mbr.bin: boot/mbr.s
+	$(AS) -f bin -I include/boot/ $< -o $@
+
+$(BUILD_DIR)/loader.bin: boot/loader.s
+	$(AS) -f bin -I include/boot/ $< -o $@
+
 $(BUILD_DIR)/kernel.o: kernel/kernel.s
 	$(AS) $(ASFLAGS) $< -o $@ 
 
@@ -81,13 +92,21 @@ mk_dir:
 	fi
 
 hd:
+	dd	if=$(BUILD_DIR)/mbr.bin\
+		of=$(HD)\
+		bs=512 count=1 conv=notrunc
+
+	dd	if=$(BUILD_DIR)/loader.bin\
+		of=$(HD)\
+		bs=512 seek=2 count=4 conv=notrunc
+
 	dd	if=$(BUILD_DIR)/kernel.bin\
-		of=$(HD_DIR)\
+		of=$(HD)\
 		bs=512 seek=9 count=200 conv=notrunc
 
 clean:
 	cd $(BUILD_DIR) && rm -f ./*
 
-build: $(BUILD_DIR)/kernel.bin
+build: $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/mbr.bin $(BUILD_DIR)/loader.bin
 
 all: mk_dir build hd

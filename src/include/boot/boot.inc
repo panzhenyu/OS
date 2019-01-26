@@ -4,7 +4,7 @@ LOADER_START_SECTOR equ 0x2			; loader起始扇区
 PAGE_DIR_TABLE_POS equ 0x100000			; 页目录表基地址
 KERNEL_START_SECTOR equ 0x9
 KERNEL_BIN_BASE_ADDR equ 0x70000
-KERNEL_ENTRY_POINT equ 0xc0001500		; kernel入口虚拟地址
+KERNEL_ENTRY_POINT equ 0xc0001500		; kernel入口虚拟地址，不准确！对于elf32来说，入口点地址是文件24字节偏移处的四个字节
 PT_NULL equ 0					; 程序段类型为空
 
 ;GDT描述符属性

@@ -2,6 +2,7 @@
 #define _KERNEL_THREAD_H
 
 #include "stdint.h"
+#include "list.h"
 
 typedef void thread_func(void*);            // 函数类型（并非函数指针类型，使用函数指针需采用thread_func*声明）
 
@@ -55,10 +56,16 @@ struct task_struct
 {
     uint32_t* self_kstack;          // 各内核线程的内核栈
     enum task_status status;        // 线程状态
-    uint8_t priority;               // 线程优先级
     char name[16];                  // 线程名
+    uint8_t priority;               // 线程优先级
+    uint8_t ticks;                  // 每次在处理器上执行的时间嘀嗒数
+    uint32_t elapsed_ticks;         // 任务执行的总时间数
+    struct list_elem general_tag;   // 线程在一般队列中的结点
+    struct list_elem all_list_tag;  // 线程在线程队列thread_all_list中的结点
+    uint32_t* pgdir;                // 进程页表的虚拟地址
     uint32_t stack_magic;           // 栈边界标记，用于检测栈溢出
 };
 
+struct task_struct* thread_start(char* name, int prio, thread_func function, void* func_arg);
 
 #endif

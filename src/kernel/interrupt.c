@@ -14,7 +14,7 @@
 #define EFLAGS_IF		0x00000200			// eflags中的if位为1
 #define GET_EFLAGS(EFLAG_VAR)	asm volatile ("pushfl; popl %0" : "=g"(EFLAG_VAR))
 
-// 中断门结构体
+/* 中断门结构体 */
 struct gate_desc
 {
 	uint16_t func_offset_low_word;		// 中断处理程序入口地址低16位
@@ -46,7 +46,7 @@ static void idt_desc_init()
 		make_idt_desc(&idt[i], IDT_DESC_ATTR_DPL0, intr_entry_table[i]);
 }
 
-//初始化8259A
+/* 初始化8259A */
 static void pic_init()
 {
 	//初始化主片
@@ -70,7 +70,7 @@ static void pic_init()
 	put_str("   pic_init done\n");
 }
 
-//通用的中断处理程序，需传入中断调用号
+/* 通用的中断处理程序，需传入中断调用号 */
 static void general_intr_handler(uint8_t vec_nr)
 {
 	if(vec_nr == 0x27 || vec_nr == 0x2f)
@@ -121,7 +121,7 @@ void idt_init()
 	put_str("idt_init done\n");
 }
 
-//开中断
+/* 开中断 */
 enum intr_status intr_enable()
 {
 	enum intr_status old_status;
@@ -149,13 +149,13 @@ enum intr_status intr_disable()
 	return old_status;
 }
 
-//设置中断
+/* 设置中断 */
 enum intr_status intr_set_status(enum intr_status status)
 {
 	return status & INTR_ON ? intr_enable() : intr_disable();
 }
 
-//获取中断状态
+/* 获取中断状态 */
 enum intr_status intr_get_status()
 {
 	uint32_t eflags = 0;
