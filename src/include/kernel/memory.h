@@ -11,7 +11,7 @@
 #define PG_US_S		0			// U/S属性位，系统级
 #define PG_US_U		4			// U/S属性位，用户级
 
-//虚拟地址池
+/* 虚拟地址池 */
 struct virtual_addr
 {
 	struct bitmap vaddr_bitmap;		// 位图结构管理

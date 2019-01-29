@@ -10,13 +10,13 @@ ASFLAGS = -f elf32
 CFLAGS = -Wall $(LIB) -c -m32 -fno-builtin
 LDFLAGS = -m elf_i386 -Ttext $(ENTRY_POINT) -e main -Map $(BUILD_DIR)/kernel.map
 OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o\
-       $(BUILD_DIR)/interrupt.o $(BUILD_DIR)/memory.o $(BUILD_DIR)/timer.o $(BUILD_DIR)/thread.o\
-       $(BUILD_DIR)/kernel.o $(BUILD_DIR)/print.o $(BUILD_DIR)/debug.o $(BUILD_DIR)/bitmap.o $(BUILD_DIR)/string.o $(BUILD_DIR)/list.o
+       $(BUILD_DIR)/interrupt.o $(BUILD_DIR)/memory.o $(BUILD_DIR)/timer.o $(BUILD_DIR)/thread.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/switch.o\
+       $(BUILD_DIR)/print.o $(BUILD_DIR)/debug.o $(BUILD_DIR)/bitmap.o $(BUILD_DIR)/string.o $(BUILD_DIR)/list.o
 
 ## build c code
 $(BUILD_DIR)/main.o: kernel/main.c $(GLOBAL_HEADER)\
 	include/lib/kernel/print.h\
-	include/kernel/init.h include/kernel/debug.h
+	include/kernel/init.h include/kernel/debug.h include/kernel/interrupt.h include/kernel/thread.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/init.o: kernel/init.c $(GLOBAL_HEADER)\
@@ -38,6 +38,7 @@ $(BUILD_DIR)/memory.o: kernel/memory.c $(GLOBAL_HEADER)\
 
 $(BUILD_DIR)/timer.o: device/timer.c $(GLOBAL_HEADER)\
 	include/lib/kernel/print.h include/lib/kernel/io.h\
+	include/kernel/interrupt.h include/kernel/thread.h include/kernel/debug.h\
 	include/device/timer.h
 	$(CC) $(CFLAGS) $< -o $@
 
@@ -59,7 +60,8 @@ $(BUILD_DIR)/bitmap.o: lib/kernel/bitmap.c $(GLOBAL_HEADER)\
 
 $(BUILD_DIR)/thread.o: kernel/thread.c $(GLOBAL_HEADER)\
 	include/lib/string.h\
-	include/kernel/memory.h include/kernel/thread.h
+	include/lib/kernel/list.h\
+	include/kernel/interrupt.h include/kernel/debug.h include/kernel/memory.h include/kernel/thread.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/list.o: lib/kernel/list.c $(GLOBAL_HEADER)\
@@ -79,6 +81,9 @@ $(BUILD_DIR)/kernel.o: kernel/kernel.s
 
 $(BUILD_DIR)/print.o: lib/kernel/print.s
 	$(AS) $(ASFLAGS) $< -o $@
+
+$(BUILD_DIR)/switch.o: kernel/switch.s
+	$(AS) $(ASFLAGS) $< -o $@ 
 
 ## link objects
 $(BUILD_DIR)/kernel.bin: $(OBJS)

@@ -7,6 +7,7 @@
         "thread.h": "c",
         "bitmap.h": "c",
         "string.h": "c",
-        "debug.h": "c"
+        "debug.h": "c",
+        "interrupt.h": "c"
     }
 }

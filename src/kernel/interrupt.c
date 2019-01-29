@@ -9,7 +9,7 @@
 #define PIC_S_CTRL		0xa0				// 从片的控制端口
 #define PIC_S_DATA		0xa1				// 从片的数据端口
 
-#define IDT_DESC_CNT		0x21				// 目前总共支持的中断数
+#define IDT_DESC_CNT	0x21				// 目前总共支持的中断数
 
 #define EFLAGS_IF		0x00000200			// eflags中的if位为1
 #define GET_EFLAGS(EFLAG_VAR)	asm volatile ("pushfl; popl %0" : "=g"(EFLAG_VAR))
@@ -18,15 +18,15 @@
 struct gate_desc
 {
 	uint16_t func_offset_low_word;		// 中断处理程序入口地址低16位
-	uint16_t selector;			// 中断处理程序段选择子
-	uint8_t dcount;				// 门描述符中第四字节
-	uint8_t attribute;			// 中断门属性
+	uint16_t selector;					// 中断处理程序段选择子
+	uint8_t dcount;						// 门描述符中第四字节
+	uint8_t attribute;					// 中断门属性
 	uint16_t func_offset_high_word;		// 中断处理程序入口地址高16位
 };
 
-static struct gate_desc idt[IDT_DESC_CNT];		// 中断描述符表
-char* intr_name[IDT_DESC_CNT];				// 用于保存异常的名字
-intr_handler idt_table[IDT_DESC_CNT];			// 中断处理程序数组
+static struct gate_desc idt[IDT_DESC_CNT];			// 中断描述符表
+char* intr_name[IDT_DESC_CNT];						// 用于保存异常的名字
+intr_handler idt_table[IDT_DESC_CNT];				// 中断处理程序数组
 extern intr_handler intr_entry_table[IDT_DESC_CNT];	// 中断程序入口地址数组
 
 static void make_idt_desc(struct gate_desc* p_gdesc, uint8_t attr, intr_handler function)
@@ -114,7 +114,7 @@ void idt_init()
 	put_str("idt_init start\n");
 	idt_desc_init();			// 初始化中断描述符表
 	exception_init();			// 注册中断处理函数及异常名称
-	pic_init();				// 初始化8295A
+	pic_init();					// 初始化8295A
 
 	uint64_t idt_operand = ((sizeof(idt)-1) | ((uint64_t)((uint32_t)idt << 16)));		// 低16位为表界限，高32位为表基址
 	asm volatile("lidt %0" : : "m" (idt_operand));
@@ -161,4 +161,9 @@ enum intr_status intr_get_status()
 	uint32_t eflags = 0;
 	GET_EFLAGS(eflags);
 	return (EFLAGS_IF & eflags) ? INTR_ON : INTR_OFF;
+}
+
+void register_handler(uint8_t vector_no, intr_handler function)
+{
+	idt_table[vector_no] = function;
 }
