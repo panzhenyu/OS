@@ -21,7 +21,7 @@ $(BUILD_DIR)/main.o: kernel/main.c $(GLOBAL_HEADER)\
 
 $(BUILD_DIR)/init.o: kernel/init.c $(GLOBAL_HEADER)\
 	include/lib/kernel/print.h\
-	include/kernel/init.h include/kernel/interrupt.h\
+	include/kernel/init.h include/kernel/interrupt.h include/kernel/thread.h\
 	include/device/timer.h
 	$(CC) $(CFLAGS) $< -o $@
 

@@ -74,10 +74,27 @@ static void pic_init()
 static void general_intr_handler(uint8_t vec_nr)
 {
 	if(vec_nr == 0x27 || vec_nr == 0x2f)
-		return;
-	put_str("int vector : 0x");
-	put_uint32_hex(vec_nr);
-	put_char('\n');
+		return;								// irq7和irq15会产生伪中断
+	set_cursor(0);
+	int cursor_pos = 0;
+	while(cursor_pos < 320)
+	{
+		put_char(' ');
+		cursor_pos++;
+	}
+	set_cursor(0);
+	put_str("!!!!!!!       exception message begin       !!!!!!!\n");
+	set_cursor(88);
+	put_str(intr_name[vec_nr]);
+	if(vec_nr == 14)
+	{
+		int page_fault_vaddr = 0;
+		asm volatile ("movl %%cr2, %0" : "=r"(page_fault_vaddr));
+		put_str("\npage fault addr is ");
+		put_uint32_hex(page_fault_vaddr);
+	}
+	put_str("\n!!!!!!!       exception message end       !!!!!!!\n");
+	while(1);
 }
 
 static void exception_init()

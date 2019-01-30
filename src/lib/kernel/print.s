@@ -4,6 +4,26 @@ SELECTOR_VIDEO equ (0x0003 << 3) + TI_GDT + RPL0
 
 [bits 32]
 section .text
+global set_cursor
+set_cursor:
+	push ebx
+	mov bx, word [esp + 8]
+	mov dx, 0x03d4
+	mov al, 0x0e
+	out dx, al
+	mov dx, 0x03d5
+	mov al, bh
+	out dx, al				; 设置高八位
+
+	mov dx, 0x03d4
+	mov al, 0x0f
+	out dx, al
+	mov dx, 0x03d5
+	mov al, bl
+	out dx, al				; 设置低八位
+	pop ebx
+	ret
+
 global put_char
 put_char:
 	pushad					; 备份32位寄存器环境

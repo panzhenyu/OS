@@ -109,3 +109,12 @@ void schedule()
     next->status = TASK_RUNNING;
     switch_to(cur, next);
 }
+
+void thread_init()
+{
+    put_str("thread_init start\n");
+    list_init(&thread_ready_list);
+    list_init(&thread_all_list);
+    make_main_thread();
+    put_str("thread_init done\n");
+}

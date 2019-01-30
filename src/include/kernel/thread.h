@@ -69,5 +69,6 @@ struct task_struct
 struct task_struct* thread_start(char* name, int prio, thread_func function, void* func_arg);
 struct task_struct* running_thread();
 void schedule();
+void thread_init();
 
 #endif

@@ -3,6 +3,7 @@
 
 #include "stdint.h"
 
+void set_cursor(uint16_t);
 void put_char(uint8_t char_asci);
 void put_str(char* str_asci);
 void put_int32(int32_t num);
