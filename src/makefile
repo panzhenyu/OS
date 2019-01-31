@@ -4,7 +4,7 @@ ENTRY_POINT = 0xc0001500
 AS = nasm
 CC = gcc
 LD = ld
-LIB = -I include/lib/ -I include/lib/kernel/ -I include/lib/user/ -I include/kernel/ -I include/device/
+LIB = -I include/lib/ -I include/lib/kernel/ -I include/lib/user/ -I include/kernel/ -I include/device/ -I include/thread
 GLOBAL_HEADER = include/lib/stdint.h include/kernel/global.h
 ASFLAGS = -f elf32 
 CFLAGS = -Wall $(LIB) -c -m32 -fno-builtin
@@ -16,12 +16,12 @@ OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o\
 ## build c code
 $(BUILD_DIR)/main.o: kernel/main.c $(GLOBAL_HEADER)\
 	include/lib/kernel/print.h\
-	include/kernel/init.h include/kernel/debug.h include/kernel/interrupt.h include/kernel/thread.h
+	include/kernel/init.h include/kernel/debug.h include/kernel/interrupt.h include/thread/thread.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/init.o: kernel/init.c $(GLOBAL_HEADER)\
 	include/lib/kernel/print.h\
-	include/kernel/init.h include/kernel/interrupt.h include/kernel/thread.h\
+	include/kernel/init.h include/kernel/interrupt.h include/thread/thread.h\
 	include/device/timer.h
 	$(CC) $(CFLAGS) $< -o $@
 
@@ -38,7 +38,7 @@ $(BUILD_DIR)/memory.o: kernel/memory.c $(GLOBAL_HEADER)\
 
 $(BUILD_DIR)/timer.o: device/timer.c $(GLOBAL_HEADER)\
 	include/lib/kernel/print.h include/lib/kernel/io.h\
-	include/kernel/interrupt.h include/kernel/thread.h include/kernel/debug.h\
+	include/kernel/interrupt.h include/thread/thread.h include/kernel/debug.h\
 	include/device/timer.h
 	$(CC) $(CFLAGS) $< -o $@
 
@@ -58,10 +58,10 @@ $(BUILD_DIR)/bitmap.o: lib/kernel/bitmap.c $(GLOBAL_HEADER)\
 	include/kernel/debug.h
 	$(CC) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/thread.o: kernel/thread.c $(GLOBAL_HEADER)\
+$(BUILD_DIR)/thread.o: thread/thread.c $(GLOBAL_HEADER)\
 	include/lib/string.h\
-	include/lib/kernel/list.h\
-	include/kernel/interrupt.h include/kernel/debug.h include/kernel/memory.h include/kernel/thread.h
+	include/lib/kernel/list.h include/lib/kernel/print.h\
+	include/kernel/interrupt.h include/kernel/debug.h include/kernel/memory.h include/thread/thread.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/list.o: lib/kernel/list.c $(GLOBAL_HEADER)\
@@ -82,7 +82,7 @@ $(BUILD_DIR)/kernel.o: kernel/kernel.s
 $(BUILD_DIR)/print.o: lib/kernel/print.s
 	$(AS) $(ASFLAGS) $< -o $@
 
-$(BUILD_DIR)/switch.o: kernel/switch.s
+$(BUILD_DIR)/switch.o: thread/switch.s
 	$(AS) $(ASFLAGS) $< -o $@ 
 
 ## link objects

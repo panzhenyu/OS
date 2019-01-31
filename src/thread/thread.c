@@ -4,6 +4,7 @@
 #include "memory.h"
 #include "string.h"
 #include "debug.h"
+#include "print.h"
 #include "interrupt.h"
 #include "list.h"
 
@@ -29,12 +30,18 @@ static void kernel_thread(thread_func* function, void* func_arg)
     function(func_arg);
 }
 
+// static void thread_destroy()
+// {
+//     while(1);
+// }
+
 void thread_create(struct task_struct* pthread, thread_func function, void* func_arg)
 {
-    pthread->self_kstack -= sizeof(struct intr_stack);          // 预留中断使用栈的空间
+    pthread->self_kstack -= sizeof(struct intr_stack);          // 预留中断使用栈的空间，作用？
     pthread->self_kstack -= sizeof(struct thread_stack);        // 预留线程栈的空间
     struct thread_stack* kthread_stack = (struct thread_stack*)pthread->self_kstack;
     kthread_stack->eip = kernel_thread;
+    // kthread_stack->unused_retaddr = thread_destroy;
     kthread_stack->function = function;
     kthread_stack->func_arg = func_arg;
     kthread_stack->ebp = kthread_stack->ebx = \
