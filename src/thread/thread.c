@@ -77,7 +77,7 @@ struct task_struct* thread_start
     init_thread(thread, name, prio);
     thread_create(thread, function, func_arg);
 
-    ASSERT(!have_elem(&thread_ready_list, &thread->general_tag));
+    ASSERT(!have_elem(&thread_ready_list, &thread->general_tag));           // 链表更新已为原子操作，此处不必担心调度影响任务队列更新
     list_append(&thread_ready_list, &thread->general_tag);
     ASSERT(!have_elem(&thread_all_list, &thread->all_list_tag));
     list_append(&thread_all_list, &thread->all_list_tag);
@@ -108,6 +108,8 @@ void schedule()
     else
     {
         // 任务需等待某时间发生后才能继续上cpu执行
+        ASSERT(!have_elem(&thread_ready_list, &cur->general_tag));
+        cur->ticks = cur->priority;
     }
     ASSERT(!list_isEmpty(&thread_ready_list));
     thread_tag = NULL;
@@ -115,6 +117,37 @@ void schedule()
     struct task_struct* next = elem2entry(struct task_struct, general_tag, thread_tag);
     next->status = TASK_RUNNING;
     switch_to(cur, next);
+}
+
+/* 阻塞当前线程 */
+void thread_block(enum task_status stat)
+{
+    // 三种阻塞态
+    ASSERT(stat == TASK_BLOCKED || stat == TASK_WAITING || stat == TASK_HANGING);
+    enum intr_status old_status = intr_disable();
+    struct task_struct* cur = running_thread();
+    cur->status = stat;
+    schedule();
+    intr_set_status(old_status);
+}
+
+/* 唤醒一个线程 */
+void thread_unblock(struct task_struct* pthread)
+{
+    enum intr_status old_status = intr_disable();
+    enum task_status stat = pthread->status;
+    ASSERT(stat == TASK_BLOCKED || stat == TASK_WAITING || stat == TASK_HANGING);
+    if(pthread->status != TASK_READY)
+    {
+        ASSERT(!have_elem(&thread_ready_list, &pthread->general_tag));
+        if(pthread->status == TASK_RUNNING)
+            PANIC("thread_unblock: blocked thread is running\n");
+        if(have_elem(&thread_ready_list, &pthread->general_tag))
+            PANIC("thread_unblock: blocked thread in ready list\n");
+        pthread->status = TASK_READY;
+        list_push(&thread_ready_list, &pthread->general_tag);
+    }
+    intr_set_status(old_status);
 }
 
 void thread_init()
