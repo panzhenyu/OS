@@ -16,7 +16,8 @@ OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o\
 ## build c code
 $(BUILD_DIR)/main.o: kernel/main.c $(GLOBAL_HEADER)\
 	include/lib/kernel/print.h\
-	include/kernel/init.h include/kernel/debug.h include/kernel/interrupt.h include/thread/thread.h
+	include/kernel/init.h include/kernel/debug.h include/kernel/interrupt.h\
+	include/thread/thread.h include/thread/sync.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/init.o: kernel/init.c $(GLOBAL_HEADER)\

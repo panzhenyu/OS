@@ -18,7 +18,8 @@ void lock_init(struct lock* lock)
 void sema_down(struct semaphore* psema)
 {
     enum intr_status old_status = intr_disable();
-    while(psema->value <= 0)
+    // 注意信号量的value为无符号八位整数，因此不可能小于零，应先阻塞再减一
+    while(psema->value == 0)
     {
         struct task_struct* cur = running_thread();
         ASSERT(!have_elem(&psema->waiters, &cur->general_tag));
@@ -28,5 +29,51 @@ void sema_down(struct semaphore* psema)
         thread_block(TASK_BLOCKED);
     }
     --psema->value;
+    intr_set_status(old_status);
+}
+
+void sema_up(struct semaphore* psema)
+{
+    enum intr_status old_status = intr_disable();
+    if(!list_isEmpty(&psema->waiters))
+    {
+        struct task_struct* awake_task = elem2entry(struct task_struct, general_tag, list_pop(&psema->waiters));
+        thread_unblock(awake_task);
+    }
+    ++psema->value;
+    ASSERT(psema->value == 1);
+    intr_set_status(old_status);
+}
+
+void lock_acquire(struct lock* plock)
+{
+    enum intr_status old_status = intr_disable();
+    struct task_struct* cur = running_thread();
+    if(plock->holder != cur)
+    {
+        sema_down(&plock->semaphore);
+        plock->holder = cur;
+        ASSERT(plock->holder_repeat_nr == 0);
+        plock->holder_repeat_nr = 1;
+    }
+    else
+    {
+        ++plock->holder_repeat_nr;
+    }
+    intr_set_status(old_status);
+}
+
+void lock_release(struct lock* plock)
+{
+    enum intr_status old_status = intr_disable();
+    if(plock->holder_repeat_nr > 1)
+    {
+        --plock->holder_repeat_nr;
+        return;
+    }
+    ASSERT(plock->holder_repeat_nr == 1);
+    plock->holder = NULL;
+    plock->holder_repeat_nr = 0;
+    sema_up(&plock->semaphore);
     intr_set_status(old_status);
 }
