@@ -3,6 +3,7 @@
 
 #include "stdint.h"
 #include "list.h"
+#include "ioqueue.h"
 
 typedef void thread_func(void*);            // 函数类型（并非函数指针类型，使用函数指针需采用thread_func*声明）
 
@@ -63,6 +64,7 @@ struct task_struct
     struct list_elem general_tag;   // 线程在一般队列中的结点
     struct list_elem all_list_tag;  // 线程在线程队列thread_all_list中的结点
     uint32_t* pgdir;                // 进程页表的虚拟地址
+    struct ioqueue* input_buff;     // 进程的输入缓冲区
     uint32_t stack_magic;           // 栈边界标记，用于检测栈溢出
 };
 

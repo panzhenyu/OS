@@ -61,6 +61,9 @@ void init_thread(struct task_struct* pthread, char* name, int prio)
     pthread->priority = prio;
     pthread->elapsed_ticks = 0;
     pthread->pgdir = NULL;
+    pthread->input_buff = get_kernel_pages(1);
+    memset(pthread->input_buff, 0, IOQUEUE_INIT_SIZE);
+    ioq_init(pthread->input_buff);
     pthread->self_kstack = (uint32_t*)((uint32_t)pthread + PG_SIZE);        // 线程自己在内核态下使用的栈顶地址
     pthread->stack_magic = 0x19870916;
 }

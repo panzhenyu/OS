@@ -41,7 +41,6 @@ void sema_up(struct semaphore* psema)
         thread_unblock(awake_task);
     }
     ++psema->value;
-    ASSERT(psema->value == 1);
     intr_set_status(old_status);
 }
 

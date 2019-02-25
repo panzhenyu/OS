@@ -6,6 +6,7 @@
 #include "thread.h"
 #include "console.h"
 #include "keyboard.h"
+#include "ioqueue.h"
 
 void init_all()
 {
@@ -16,4 +17,5 @@ void init_all()
 	thread_init();
 	console_init();
 	keyboard_init();
+	ioqueue_init();
 }

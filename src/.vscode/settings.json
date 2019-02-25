@@ -2,6 +2,13 @@
     "files.associations": {
         "print.h": "c",
         "init.h": "c",
-        "keyboard.h": "c"
+        "keyboard.h": "c",
+        "ioqueue.h": "c",
+        "sync.h": "c",
+        "queue.h": "c",
+        "list.h": "c",
+        "stdint.h": "c",
+        "memory.h": "c",
+        "thread.h": "c"
     }
 }

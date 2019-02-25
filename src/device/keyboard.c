@@ -2,6 +2,7 @@
 #include "interrupt.h"
 #include "print.h"
 #include "io.h"
+#include "ioqueue.h"
 
 #define KBD_PROT 0x60
 
@@ -133,6 +134,22 @@ static char keymap[][2] = {
 static void intr_keyboard_handler()
 {
     uint8_t scan = inb(KBD_PROT), ascii;
+    if(ext_scancode)
+    {
+        ext_scancode = 0;
+        switch(scan)
+        {
+            case CTRL_R_MAKE & 0x00ff:
+                ctrl_status = 1; break;
+            case CTRL_R_BREAK & 0x00ff:
+                ctrl_status = 0; break;
+            case ALT_R_MAKE & 0x00ff:
+                alt_status = 1; break;
+            case ALT_R_BREAK & 0x00ff:
+                alt_status = 0; break;
+        }
+        return;
+    }
     switch(scan)
     {
         case SHIFT_L_MAKE:
@@ -156,19 +173,8 @@ static void intr_keyboard_handler()
             caps_lock_status ^= 1; break;
 
         case 0xe0:
-            scan = inb(KBD_PROT);
-            switch(scan)
-            {
-                case CTRL_R_MAKE & 0x00ff:
-                    ctrl_status = 1; break;
-                case CTRL_R_BREAK & 0x00ff:
-                    ctrl_status = 0; break;
-                case ALT_R_MAKE & 0x00ff:
-                    alt_status = 1; break;
-                case ALT_R_BREAK & 0x00ff:
-                    alt_status = 0; break;
-            }
-            break;
+            ext_scancode = 1;
+            return;
 
         case F1_MAKE:
         case F2_MAKE:
@@ -191,7 +197,7 @@ static void intr_keyboard_handler()
                 return;
             if((ascii >= 'a' && ascii <= 'z') || (ascii >='A' && ascii <= 'Z'))
                 ascii = keymap[scan][shift_status ^ caps_lock_status];
-            put_char(ascii);
+            io_input(ascii);
             break;
     }
 }
