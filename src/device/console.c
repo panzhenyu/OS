@@ -1,4 +1,5 @@
 #include "console.h"
+#include "sync.h"
 
 static struct lock console_lock;
 

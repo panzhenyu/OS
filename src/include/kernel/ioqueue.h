@@ -19,6 +19,7 @@ void ioq_init(struct ioqueue* piq);
 void ioqueue_init();
 void io_input(uint8_t ascii);
 void io_getchar();
+uint8_t getchar();
 char* io_getline();
 
 #endif

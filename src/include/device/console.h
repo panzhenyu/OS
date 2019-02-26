@@ -1,7 +1,6 @@
 #ifndef _DEVICE_CONSOLE_H
 #define _DEVICE_CONSOLE_H
 
-#include "sync.h"
 #include "print.h"
 #include "stdint.h"
 

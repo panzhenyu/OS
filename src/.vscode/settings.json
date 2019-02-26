@@ -9,6 +9,7 @@
         "list.h": "c",
         "stdint.h": "c",
         "memory.h": "c",
-        "thread.h": "c"
+        "thread.h": "c",
+        "console.h": "c"
     }
 }

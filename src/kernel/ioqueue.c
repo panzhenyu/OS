@@ -1,8 +1,8 @@
 #include "ioqueue.h"
-#include "print.h"
 #include "console.h"
+#include "thread.h"
 
-static struct ioqueue sysiq;
+struct ioqueue sys_ioqueue;
 static struct ioqueue* iq;
 
 void ioq_init(struct ioqueue* piq)
@@ -15,9 +15,8 @@ void ioq_init(struct ioqueue* piq)
 void ioqueue_init()
 {
     put_str("ioqueue_init start\n");
-    ioq_init(&sysiq);
-    iq = &sysiq;
-    running_thread()->input_buff = &sysiq;              // 设置main线程的input_buff为系统io队列
+    ioq_init(&sys_ioqueue);
+    iq = &sys_ioqueue;
     put_str("ioqueue_init done\n");
 }
 
@@ -33,11 +32,32 @@ void io_input(uint8_t ascii)
 void io_getchar(struct ioqueue* piq)
 {
     struct ioqueue* old_ioq = iq;
-    uint32_t old_len = piq->length;
+    uint32_t old_len = 0;
     iq = piq;
-    while(old_len < piq->length && piq->ascii[++old_len] != '\n');
-    iq = &sysiq;
+    while(1)
+    {
+        if(old_len >= piq->length)
+            continue;
+        console_put_char(piq->ascii[old_len]);
+        if(piq->ascii[old_len++] == '\r')
+            break;
+    }
+    iq = old_ioq;
     piq->length = old_len;
+}
+
+uint8_t getchar()
+{
+    struct ioqueue* cur = running_thread()->input_buff;
+    if(cur->length == 0)
+        io_getchar(cur);
+    lock_acquire(&cur->iolock);
+    uint8_t ans = cur->ascii[0]; int i;
+    for(i=1;i<cur->length;i++)
+        cur->ascii[i-1] = cur->ascii[i];
+    cur->length--;
+    lock_release(&cur->iolock);
+    return ans;
 }
 
 // char* io_getline()

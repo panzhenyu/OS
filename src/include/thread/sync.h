@@ -3,7 +3,6 @@
 
 #include "stdint.h"
 #include "list.h"
-#include "thread.h"
 
 struct semaphore
 {

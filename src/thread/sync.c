@@ -1,5 +1,6 @@
 #include "interrupt.h"
 #include "debug.h"
+#include "thread.h"
 #include "sync.h"
 
 void sema_init(struct semaphore* sema, uint8_t value)

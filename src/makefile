@@ -92,7 +92,6 @@ $(BUILD_DIR)/keyboard.o: device/keyboard.c $(GLOBAL_HEADER)\
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/ioqueue.o: kernel/ioqueue.c $(GLOBAL_HEADER)\
-	include/lib/kernel/print.h\
 	include/device/console.h\
 	include/kernel/ioqueue.h\
 	include/thread/sync.h
