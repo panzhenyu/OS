@@ -10,6 +10,9 @@
         "stdint.h": "c",
         "memory.h": "c",
         "thread.h": "c",
-        "console.h": "c"
+        "console.h": "c",
+        "global.h": "c",
+        "interrupt.h": "c",
+        "a.out.h": "c"
     }
 }

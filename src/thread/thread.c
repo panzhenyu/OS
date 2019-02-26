@@ -26,7 +26,7 @@ struct task_struct* running_thread()
 
 static void kernel_thread(thread_func* function, void* func_arg)
 {
-    intr_enable();
+    // intr_enable();
     function(func_arg);
 }
 
@@ -54,18 +54,9 @@ void init_thread(struct task_struct* pthread, char* name, int prio)
     memset(pthread, 0, sizeof(*pthread));
     strcpy(pthread->name, name);
     if(pthread == main_thread)
-    {
         pthread->status = TASK_RUNNING;
-        extern struct ioqueue sys_ioqueue;
-        pthread->input_buff = &sys_ioqueue;
-    }
     else
-    {
         pthread->status = TASK_READY;
-        pthread->input_buff = get_kernel_pages(1);
-        memset(pthread->input_buff, 0, IOQUEUE_INIT_SIZE);
-        ioq_init(pthread->input_buff);
-    }
     pthread->ticks = prio;
     pthread->priority = prio;
     pthread->elapsed_ticks = 0;

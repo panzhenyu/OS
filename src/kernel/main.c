@@ -6,17 +6,43 @@
 #include "sync.h"
 #include "console.h"
 #include "ioqueue.h"
+#include "keyboard.h"
 
-void thread_1(void* g)
+void k_thread_a(void* args)
 {
 	while(1)
-		console_put_char(getchar());
+	{
+		enum intr_status old_status = intr_disable();
+		if(!ioq_empty(&kbd_buf))
+		{
+			console_put_str(args);
+			char byte = ioq_getchar(&kbd_buf);
+			console_put_char(byte);
+		}
+		intr_set_status(old_status);
+	}
+}
+
+void k_thread_b(void* args)
+{
+	while(1)
+	{
+		enum intr_status old_status = intr_disable();
+		if(!ioq_empty(&kbd_buf))
+		{
+			console_put_str(args);
+			char byte = ioq_getchar(&kbd_buf);
+			console_put_char(byte);
+		}
+		intr_set_status(old_status);
+	}
 }
 int main()
 {
 	init_all();
+	thread_start("consumer_a", 31, k_thread_a, " A_");
+	thread_start("consumer_b", 31, k_thread_b, " B_");
 	intr_enable();
-	thread_start("thread-1", 1, thread_1, (void*)0);
 	while(1);
 	return 0;
 }

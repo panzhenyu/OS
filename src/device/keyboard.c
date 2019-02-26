@@ -1,6 +1,6 @@
 #include "keyboard.h"
 #include "interrupt.h"
-#include "print.h"
+#include "console.h"
 #include "io.h"
 #include "ioqueue.h"
 
@@ -56,6 +56,7 @@
 #define F12_MAKE        0x46
 
 static uint8_t ctrl_status, shift_status, alt_status, caps_lock_status, ext_scancode;
+struct ioqueue kbd_buf;
 
 static char keymap[][2] = {
     {0, 0},
@@ -197,7 +198,8 @@ static void intr_keyboard_handler()
                 return;
             if((ascii >= 'a' && ascii <= 'z') || (ascii >='A' && ascii <= 'Z'))
                 ascii = keymap[scan][shift_status ^ caps_lock_status];
-            io_input(ascii);
+            if(!ioq_full(&kbd_buf))
+                ioq_putchar(&kbd_buf, ascii);
             break;
     }
 }
@@ -205,6 +207,7 @@ static void intr_keyboard_handler()
 void keyboard_init()
 {
     put_str("keyboard_init start\n");
+    ioqueue_init(&kbd_buf);
     register_handler(0x21, intr_keyboard_handler);
     put_str("keyboard_init done\n");
 }
