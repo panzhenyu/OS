@@ -1,7 +1,6 @@
 #ifndef _THREAD_THREAD_H
 #define _THREAD_THREAD_H
 
-#include "stdint.h"
 #include "list.h"
 
 typedef void thread_func(void*);            // 函数类型（并非函数指针类型，使用函数指针需采用thread_func*声明）

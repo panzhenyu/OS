@@ -37,6 +37,7 @@ void k_thread_b(void* args)
 		intr_set_status(old_status);
 	}
 }
+
 int main()
 {
 	init_all();

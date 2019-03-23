@@ -5,8 +5,8 @@ extern put_str;
 extern idt_table;
 
 section .data
-	intr_str db "interrupt occcur!", 0xa, 0
-	global intr_entry_table
+intr_str db "interrupt occcur!", 0xa, 0
+global intr_entry_table
 intr_entry_table:
 
 %macro VECTOR 2

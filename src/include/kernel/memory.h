@@ -1,7 +1,6 @@
 #ifndef _KERNEL_MEMORY_H
 #define _KERNEL_MEMORY_H
 
-#include "stdint.h"
 #include "bitmap.h"
 
 #define PG_P_1		1			// 存在位
@@ -10,6 +9,7 @@
 #define PG_RW_W		2			// R/W属性位，读/写/执行
 #define PG_US_S		0			// U/S属性位，系统级
 #define PG_US_U		4			// U/S属性位，用户级
+#define PG_SIZE		4096		// 内存页大小
 
 /* 虚拟地址池 */
 struct virtual_addr

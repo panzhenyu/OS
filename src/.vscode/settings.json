@@ -13,6 +13,8 @@
         "console.h": "c",
         "global.h": "c",
         "interrupt.h": "c",
-        "a.out.h": "c"
+        "a.out.h": "c",
+        "string.h": "c",
+        "bitmap.h": "c"
     }
 }

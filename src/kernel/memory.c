@@ -6,8 +6,6 @@
 #include "string.h"
 #include "global.h"
 
-#define PG_SIZE 4096
-
 /*内核主进程栈顶为0xc009f000
  *将来主进程PCB占用一个页，其基地址为0xc009e000
  *位图基址从0xc009a000开始，一直到0xc009e000，共四个位图可用*/
