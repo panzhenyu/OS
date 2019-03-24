@@ -9,7 +9,6 @@
 #define PG_RW_W		2			// R/W属性位，读/写/执行
 #define PG_US_S		0			// U/S属性位，系统级
 #define PG_US_U		4			// U/S属性位，用户级
-#define PG_SIZE		4096		// 内存页大小
 
 /* 虚拟地址池 */
 struct virtual_addr
@@ -21,7 +20,7 @@ struct virtual_addr
 enum pool_flags
 {
 	PF_KERNEL = 1,				// 内核内存池
-	PF_USER = 2				// 用户内存池
+	PF_USER = 2					// 用户内存池
 };
 
 extern struct pool kernel_pool, user_pool;
@@ -29,7 +28,8 @@ extern struct pool kernel_pool, user_pool;
 void mem_init();
 uint32_t* pde_ptr(uint32_t vaddr);
 uint32_t* pte_ptr(uint32_t vaddr);
-void* malloc_page(enum pool_flags pf, uint32_t cnt);
 void* get_kernel_pages(uint32_t pg_cnt);
+void* get_user_pages(uint32_t pg_cnt);
+uint32_t addr_v2p(uint32_t vaddr);
 
 #endif

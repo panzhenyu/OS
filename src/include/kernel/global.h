@@ -77,7 +77,18 @@ struct gdt_desc
     uint8_t base_high_byte;
 };
 
+/* eflags相关宏 */
+#define EFLAGS_MBS (1 << 1)
+#define EFLAGS_IF_1 (1 << 9)
+#define EFLAGS_IF_0 0
+#define EFLAGS_IOPL_3 (3 << 12)
+#define EFLAGS_IOPL_0 (0 << 12)
+
 /* 其他宏 */
 #define NULL 0
+#define PG_SIZE 4096
+#define bool int
+#define TRUE 1
+#define FALSE 0
 
 #endif

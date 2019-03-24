@@ -46,10 +46,19 @@ int bitmap_scan(struct bitmap* btmp, uint32_t cnt)
 	return bit_idx_start;
 }
 
+/* 设置位图bit_idx位的值 */
 void bitmap_set(struct bitmap* btmp, uint32_t bit_idx, int8_t value)
 {
 	ASSERT(value == 0 || value == 1);
 	uint32_t byte_idx = bit_idx / 8;
 	uint32_t bit_odd = bit_idx % 8;
 	btmp->bits[byte_idx] = value ? (btmp->bits[byte_idx] | (BITMAP_MASK << bit_odd)) : (btmp->bits[byte_idx] & ~(BITMAP_MASK << bit_odd));
+}
+
+/* 获取位图bit_idx位的值*/
+int8_t bitmap_get(struct bitmap* btmp, uint32_t bit_idx)
+{
+	uint32_t byte_idx = bit_idx / 8;
+	uint32_t bit_odd = bit_idx % 8;
+	return btmp->bits[byte_idx] & (BITMAP_MASK << bit_odd);
 }

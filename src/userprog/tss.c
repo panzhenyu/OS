@@ -2,7 +2,6 @@
 #include "print.h"
 #include "string.h"
 #include "tss.h"
-#include "memory.h"
 
 /* tss结构体 */
 struct tss
