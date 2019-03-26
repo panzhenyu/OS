@@ -38,8 +38,9 @@ struct tss
 static struct tss tss;
 
 /* 更新tss中的esp0为pthread的0级栈 */
-void update_tss_esp(struct task_struct* pthread)
+void update_tss_esp(const struct task_struct* pthread)
 {
+    // 当用户进程发生时钟中断时，esp会自动变为ss0，在中断处理函数中会根据esp获取pcb用户进程pcb，因此此处esp必须在pthread指向的页中
     tss.esp0 = (uint32_t*)((uint32_t)pthread + PG_SIZE);    // 将PCB尾部当做0级栈顶
 }
 

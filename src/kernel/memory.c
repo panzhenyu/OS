@@ -11,7 +11,7 @@
  *位图基址从0xc009a000开始，一直到0xc009e000，共四个位图可用*/
 #define MEM_BITMAP_BASE 0xc009a000
 
-/*0xc0000000是内核区起始虚拟地址，0xc0100000表示跨过1MB*/
+/* 0xc0000000是内核区起始虚拟地址，0xc0100000表示跨过1MB */
 #define K_HEAP_START 0xc0100000
 
 #define PDE_IDX(vaddr) ((vaddr & 0xffc00000) >> 22)	// 返回虚拟地址高十位

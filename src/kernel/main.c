@@ -7,34 +7,24 @@
 #include "console.h"
 #include "ioqueue.h"
 #include "keyboard.h"
+#include "process.h"
+
+int test_var_a = 0;
 
 void k_thread_a(void* args)
 {
 	while(1)
 	{
-		enum intr_status old_status = intr_disable();
-		if(!ioq_empty(&kbd_buf))
-		{
-			console_put_str(args);
-			char byte = ioq_getchar(&kbd_buf);
-			console_put_char(byte);
-		}
-		intr_set_status(old_status);
+		console_put_uint32t(test_var_a);
+		console_put_char('\n');
 	}
 }
 
-void k_thread_b(void* args)
+void user_a()
 {
 	while(1)
 	{
-		enum intr_status old_status = intr_disable();
-		if(!ioq_empty(&kbd_buf))
-		{
-			console_put_str(args);
-			char byte = ioq_getchar(&kbd_buf);
-			console_put_char(byte);
-		}
-		intr_set_status(old_status);
+		test_var_a++;
 	}
 }
 
@@ -42,7 +32,7 @@ int main()
 {
 	init_all();
 	thread_start("consumer_a", 31, k_thread_a, " A_");
-	thread_start("consumer_b", 31, k_thread_b, " B_");
+	process_execute(user_a, "a", 10);
 	intr_enable();
 	while(1);
 	return 0;

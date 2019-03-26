@@ -17,6 +17,7 @@
         "string.h": "c",
         "bitmap.h": "c",
         "debug.h": "c",
-        "process.h": "c"
+        "process.h": "c",
+        "tss.h": "c"
     }
 }

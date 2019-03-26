@@ -67,8 +67,13 @@ struct task_struct
     uint32_t stack_magic;               // 栈边界标记，用于检测栈溢出
 };
 
-struct task_struct* thread_start(char* name, int prio, thread_func function, void* func_arg);
+extern struct list thread_ready_list;
+extern struct list thread_all_list;
+
+struct task_struct* thread_start(const char* name, int prio, thread_func function, void* func_arg);
 struct task_struct* running_thread();
+void thread_create(struct task_struct* pthread, thread_func function, void* func_arg);
+void init_thread(struct task_struct* pthread, const char* name, int prio);
 void schedule();
 void thread_block(enum task_status stat);
 void thread_unblock(struct task_struct* pthread);

@@ -85,8 +85,8 @@ struct gdt_desc
 #define EFLAGS_IOPL_0 (0 << 12)
 
 /* 其他宏 */
-#define NULL 0
 #define PG_SIZE 4096
+#define NULL 0
 #define bool int
 #define TRUE 1
 #define FALSE 0

@@ -10,7 +10,7 @@ ASFLAGS = -f elf32
 CFLAGS = -Wall $(LIB) -c -m32 -fno-builtin
 LDFLAGS = -m elf_i386 -Ttext $(ENTRY_POINT) -e main -Map $(BUILD_DIR)/kernel.map
 OBJS =	$(BUILD_DIR)/main.o $(BUILD_DIR)/init.o\
-		$(BUILD_DIR)/console.o $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/timer.o $(BUILD_DIR)/ioqueue.o\
+		$(BUILD_DIR)/console.o $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/timer.o $(BUILD_DIR)/ioqueue.o $(BUILD_DIR)/process.o\
 		$(BUILD_DIR)/interrupt.o $(BUILD_DIR)/memory.o $(BUILD_DIR)/thread.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/switch.o $(BUILD_DIR)/tss.o\
 		$(BUILD_DIR)/print.o $(BUILD_DIR)/debug.o $(BUILD_DIR)/bitmap.o $(BUILD_DIR)/string.o $(BUILD_DIR)/list.o $(BUILD_DIR)/sync.o
 
@@ -19,7 +19,8 @@ $(BUILD_DIR)/main.o: kernel/main.c $(GLOBAL_HEADER)\
 	include/lib/kernel/print.h\
 	include/kernel/init.h include/kernel/debug.h include/kernel/interrupt.h\
 	include/thread/thread.h include/thread/sync.h\
-	include/device/console.h include/device/ioqueue.h
+	include/device/console.h include/device/ioqueue.h\
+	include/user/process.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/init.o: kernel/init.c $(GLOBAL_HEADER)\
@@ -67,7 +68,8 @@ $(BUILD_DIR)/bitmap.o: lib/kernel/bitmap.c $(GLOBAL_HEADER)\
 $(BUILD_DIR)/thread.o: thread/thread.c $(GLOBAL_HEADER)\
 	include/lib/string.h\
 	include/lib/kernel/list.h include/lib/kernel/print.h\
-	include/kernel/interrupt.h include/kernel/debug.h include/kernel/memory.h include/thread/thread.h
+	include/kernel/interrupt.h include/kernel/debug.h include/kernel/memory.h include/thread/thread.h\
+	include/user/process.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/list.o: lib/kernel/list.c $(GLOBAL_HEADER)\
@@ -103,6 +105,14 @@ $(BUILD_DIR)/tss.o: userprog/tss.c $(GLOBAL_HEADER)\
 	include/lib/string.h\
 	include/lib/kernel/print.h\
 	include/user/tss.h
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/process.o: userprog/process.c $(GLOBAL_HEADER)\
+	include/lib/string.h\
+	include/device/console.h\
+	include/kernel/memory.h include/kernel/interrupt.h include/kernel/debug.h\
+	include/thread/thread.h\
+	include/user/process.h include/user/tss.h
 	$(CC) $(CFLAGS) $< -o $@
 
 ## build asm code

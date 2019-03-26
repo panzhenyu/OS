@@ -7,6 +7,7 @@
 #include "print.h"
 #include "interrupt.h"
 #include "list.h"
+#include "process.h"
 
 #define PG_SIZE 4096
 
@@ -49,7 +50,7 @@ void thread_create(struct task_struct* pthread, thread_func function, void* func
 }
 
 /* 初始化线程基本信息 */
-void init_thread(struct task_struct* pthread, char* name, int prio)
+void init_thread(struct task_struct* pthread, const char* name, int prio)
 {
     memset(pthread, 0, sizeof(*pthread));
     strcpy(pthread->name, name);
@@ -67,7 +68,7 @@ void init_thread(struct task_struct* pthread, char* name, int prio)
 
 struct task_struct* thread_start
 (
-    char* name,
+    const char* name,
     int prio,
     thread_func function,
     void* func_arg
@@ -115,6 +116,7 @@ void schedule()
     thread_tag = NULL;
     thread_tag = list_pop(&thread_ready_list);
     struct task_struct* next = elem2entry(struct task_struct, general_tag, thread_tag);
+    process_activate(next);     // 切换进程页表、ss0
     next->status = TASK_RUNNING;
     switch_to(cur, next);
 }
