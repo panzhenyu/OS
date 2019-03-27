@@ -22,7 +22,7 @@ void process_start(void *filename_)
     proc_stack->eip = function;
     proc_stack->cs = SELECTOR_U_CODE;
     proc_stack->eflags = (EFLAGS_IOPL_0 | EFLAGS_MBS | EFLAGS_IF_1);
-    // 调度之后发生的申请，此时页表已经发生变化
+    // 调度之后发生的申请，此时页表已改变
     ASSERT(get_a_page(PF_USER, USER_STACK3_VADDR));
     proc_stack->esp = (void*)USER_STACK3_VADDR + PG_SIZE;
     proc_stack->ss = SELECTOR_U_STACK;
@@ -43,7 +43,7 @@ void page_dir_activate(const struct task_struct *pthread)
 void process_activate(const struct task_struct *pthread)
 {
     ASSERT(pthread != NULL);
-    // page_dir_activate(pthread);
+    page_dir_activate(pthread);
     // 若是线程则无需更新ss0
     if(pthread->pgdir)
         update_tss_esp(pthread);

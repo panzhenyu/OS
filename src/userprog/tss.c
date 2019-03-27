@@ -67,8 +67,8 @@ void tss_init()
     tss.iobase = tss_size;      // 表示无io位图
     // 0x903为gdt基址，由于已经开启了分页模式，因此采用虚拟地址访存
     *((struct gdt_desc*)0xc0000923) = make_gdt_desc((uint32_t*)&tss, tss_size - 1, TSS_ATTR_LOW, TSS_ATTR_HIGH);
-    *((struct gdt_desc*)0xc000092b) = make_gdt_desc((uint32_t*)0, 0xfffff, GDT_CODE_ATTR_LOW_DPL3, GDT_ATTR_HIGH);
-    *((struct gdt_desc*)0xc0000933) = make_gdt_desc((uint32_t*)0, 0xfffff, GDT_DATA_ATTR_LOW_DPL3, GDT_ATTR_HIGH);
+    *((struct gdt_desc*)0xc000092b) = make_gdt_desc((uint32_t*)0, 0xFFFFF, GDT_CODE_ATTR_LOW_DPL3, GDT_ATTR_HIGH);
+    *((struct gdt_desc*)0xc0000933) = make_gdt_desc((uint32_t*)0, 0xFFFFF, GDT_DATA_ATTR_LOW_DPL3, GDT_ATTR_HIGH);
     uint64_t gdt_opegrand = ((8 * 7 - 1) | ((uint64_t)(uint32_t)0xc0000903 << 16));
     asm volatile ("lgdt %0" : : "m" (gdt_opegrand));    // 修正gdt
     asm volatile ("ltr %w0" : : "r" (SELECTOR_TSS));    // 加载tss选择子至tr寄存器

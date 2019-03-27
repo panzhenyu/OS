@@ -74,7 +74,7 @@ p_mode_start:
 	sgdt [gdt_ptr]
 	mov ebx, [gdt_ptr + 2]
 	or dword [ebx + 0x18 + 4], 0xc0000000		; 更正视频段段基址
-	add dword [gdt_ptr + 2], 0xc0000000		; 更正gdt表首地址
+	add dword [gdt_ptr + 2], 0xc0000000			; 更正gdt表首地址
 	add esp, 0xc0000000				; 更正栈指针
 	mov eax, PAGE_DIR_TABLE_POS
 	mov cr3, eax					; 将页目录基地址给cr3
@@ -107,7 +107,7 @@ setup_page:
 	mov ebx, eax					; 为create_pte做准备，ebx为基地址
 
 	or eax, PG_US_U | PG_RW_W | PG_P
-	mov [PAGE_DIR_TABLE_POS + 0x0], eax		; 第一个目录项，此时指向第一个页表
+	mov [PAGE_DIR_TABLE_POS + 0x0], eax			; 第一个目录项，此时指向第一个页表
 	mov [PAGE_DIR_TABLE_POS + 0xc00], eax		; 内核空间的起始目录项，此时指向第一个页表
 	sub eax, 0x1000
 	mov [PAGE_DIR_TABLE_POS + 4092], eax		; 使最后一个目录项指向页目录表自己的地址

@@ -132,8 +132,9 @@ void idt_init()
 	idt_desc_init();			// 初始化中断描述符表
 	exception_init();			// 注册中断处理函数及异常名称
 	pic_init();					// 初始化8295A
-
-	uint64_t idt_operand = ((sizeof(idt)-1) | ((uint64_t)((uint32_t)idt << 16)));		// 低16位为表界限，高32位为表基址
+	// 低16位为表界限，高32位为表基址
+	// 由于用户进程不复制0-2g的页目录项，此处需要将idt在内核空间的虚拟地址送至idtr，否则在页表切换时中断处理程序的入口地址(虚拟地址)将无法解析
+	uint64_t idt_operand = ((sizeof(idt)-1) | ((uint64_t)((uint32_t)(idt + 0xc0000000)) << 16));
 	asm volatile("lidt %0" : : "m" (idt_operand));
 	put_str("idt_init done\n");
 }

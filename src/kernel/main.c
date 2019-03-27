@@ -15,8 +15,8 @@ void k_thread_a(void* args)
 {
 	while(1)
 	{
-		console_put_uint32t(test_var_a);
-		console_put_char('\n');
+		// console_put_uint32t(test_var_a);
+		// console_put_char('\n');
 	}
 }
 
@@ -28,11 +28,17 @@ void user_a()
 	}
 }
 
+void user_b()
+{
+	while(1)
+		test_var_a++;
+}
 int main()
 {
 	init_all();
 	thread_start("consumer_a", 31, k_thread_a, " A_");
 	process_execute(user_a, "a", 10);
+	process_execute(user_b, "b", 10);
 	intr_enable();
 	while(1);
 	return 0;

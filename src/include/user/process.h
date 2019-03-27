@@ -3,7 +3,7 @@
 
 #include "thread.h"
 
-#define USER_STACK3_VADDR (0xc0001000 - 0x1000)
+#define USER_STACK3_VADDR (0xc0000000 - 0x1000)
 #define USER_VADDR_START 0x00000000
 
 void process_start(void *filename_);

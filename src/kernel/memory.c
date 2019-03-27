@@ -6,9 +6,9 @@
 #include "thread.h"
 #include "sync.h"
 
-/*内核主进程栈顶为0xc009f000
- *将来主进程PCB占用一个页，其基地址为0xc009e000
- *位图基址从0xc009a000开始，一直到0xc009e000，共四个位图可用*/
+/* 内核主进程栈顶为0xc009f000
+ * 将来主进程PCB占用一个页，其基地址为0xc009e000
+ * 位图基址从0xc009a000开始，一直到0xc009e000，共四个位图可用 */
 #define MEM_BITMAP_BASE 0xc009a000
 
 /* 0xc0000000是内核区起始虚拟地址，0xc0100000表示跨过1MB */
@@ -75,6 +75,7 @@ static void mem_pool_init(uint32_t all_mem)
 
 	kernel_vaddr.vaddr_bitmap.btmp_bytes_len = kbm_length;
 	kernel_vaddr.vaddr_bitmap.bits = (void*)(MEM_BITMAP_BASE + kbm_length + ubm_length);
+	// 内核虚拟地址池的基地址必须要用户进程内核区之中，否则在用户进程调度至另一用户进程时将无法将pcb的pgdir转换成对应的物理地址
 	kernel_vaddr.vaddr_start = K_HEAP_START;
 	bitmap_init(&kernel_vaddr.vaddr_bitmap);
 
@@ -227,7 +228,11 @@ bool get_a_page(enum pool_flags pf, uint32_t vaddr)
 	if(bit_idx < 0 || bitmap_get(&cur->userprog_vaddr.vaddr_bitmap, bit_idx))
 		bit_idx = -1;
 	else
+	{
 		bitmap_set(&cur->userprog_vaddr.vaddr_bitmap, bit_idx, 1);
+		void *page_phyaddr = palloc(mem_pool);
+		page_table_add((void*)vaddr, page_phyaddr);
+	}
 	lock_release(&mem_pool->lock);
 	return bit_idx < 0 ? FALSE : TRUE;
 }
