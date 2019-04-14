@@ -18,6 +18,7 @@
         "bitmap.h": "c",
         "debug.h": "c",
         "process.h": "c",
-        "tss.h": "c"
+        "tss.h": "c",
+        "syscall.h": "c"
     }
 }

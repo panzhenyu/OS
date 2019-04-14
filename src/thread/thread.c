@@ -8,6 +8,7 @@
 #include "interrupt.h"
 #include "list.h"
 #include "process.h"
+#include "sync.h"
 
 #define PG_SIZE 4096
 
@@ -25,6 +26,17 @@ struct task_struct* running_thread()
     return (struct task_struct*)(esp & 0xfffff000);
 }
 
+
+struct lock pid_lock;           // pid锁
+static pid_t allocate_pid(void)
+{
+    static pid_t next_pid = 0;
+    lock_acquire(&pid_lock);
+    next_pid++;
+    lock_release(&pid_lock);
+    return next_pid;
+}
+
 static void kernel_thread(thread_func* function, void* func_arg)
 {
     // intr_enable();
@@ -38,8 +50,8 @@ static void kernel_thread(thread_func* function, void* func_arg)
 
 void thread_create(struct task_struct* pthread, thread_func function, void* func_arg)
 {
-    pthread->self_kstack -= sizeof(struct intr_stack);          // 预留中断使用栈的空间，作用？
-    pthread->self_kstack -= sizeof(struct thread_stack);        // 预留线程栈的空间
+    pthread->self_kstack -= sizeof(struct intr_stack);          // 预留中断使用栈的空间，供用户进程使用
+    pthread->self_kstack -= sizeof(struct thread_stack);        // 预留线程栈的空间，供调度使用
     struct thread_stack* kthread_stack = (struct thread_stack*)pthread->self_kstack;
     kthread_stack->eip = kernel_thread;
     // kthread_stack->unused_retaddr = thread_destroy;
@@ -54,6 +66,7 @@ void init_thread(struct task_struct* pthread, const char* name, int prio)
 {
     memset(pthread, 0, sizeof(*pthread));
     strcpy(pthread->name, name);
+    pthread->pid = allocate_pid();
     if(pthread == main_thread)
         pthread->status = TASK_RUNNING;
     else
@@ -62,7 +75,7 @@ void init_thread(struct task_struct* pthread, const char* name, int prio)
     pthread->priority = prio;
     pthread->elapsed_ticks = 0;
     pthread->pgdir = NULL;
-    pthread->self_kstack = (uint32_t*)((uint32_t)pthread + PG_SIZE);        // 线程自己在内核态下使用的栈顶地址
+    pthread->self_kstack = (uint8_t*)pthread + PG_SIZE;        // 线程自己在内核态下使用的栈顶地址
     pthread->stack_magic = 0x19870916;
 }
 
@@ -157,6 +170,7 @@ void thread_init()
     put_str("thread_init start\n");
     list_init(&thread_ready_list);
     list_init(&thread_all_list);
+    lock_init(&pid_lock);
     make_main_thread();
     put_str("thread_init done\n");
 }

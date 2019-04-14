@@ -6,6 +6,7 @@ extern idt_table;
 
 section .data
 intr_str db "interrupt occcur!", 0xa, 0
+
 global intr_entry_table
 intr_entry_table:
 
@@ -95,3 +96,26 @@ VECTOR 0x2c, ZERO			; ps/2鼠标
 VECTOR 0x2d, ZERO			; fpu浮点异常
 VECTOR 0x2e, ZERO			; 硬盘
 VECTOR 0x2f, ZERO			; 保留
+
+; 0x80号中断
+[bits 32]
+extern syscall_table
+section .text
+global syscall_handler
+syscall_handler:
+	push 0
+	push ds
+	push es
+	push fs
+	push gs
+	pushad
+
+	push 0x80				; 系统调用号
+	push edx				; 系统调用第三个参数
+	push ecx				; 系统调用第二个参数
+	push ebx				; 系统调用第一个参数
+	call [syscall_table + eax*4]
+	add esp, 12				; 跨过三个传入参数
+	mov [esp + 8*4], eax	; 由于中断返回后会恢复寄存器，因此eax必须保存在中断栈的eax处
+
+	jmp intr_exit

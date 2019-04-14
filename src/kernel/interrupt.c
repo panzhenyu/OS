@@ -9,7 +9,7 @@
 #define PIC_S_CTRL		0xa0				// 从片的控制端口
 #define PIC_S_DATA		0xa1				// 从片的数据端口
 
-#define IDT_DESC_CNT	0x30				// 目前总共支持的中断数
+#define IDT_DESC_CNT	0x81				// 目前总共支持的中断数
 
 #define EFLAGS_IF		0x00000200			// eflags中的if位为1
 #define GET_EFLAGS(EFLAG_VAR)	asm volatile ("pushfl; popl %0" : "=g"(EFLAG_VAR))
@@ -28,6 +28,7 @@ static struct gate_desc idt[IDT_DESC_CNT];			// 中断描述符表
 char* intr_name[IDT_DESC_CNT];						// 用于保存异常的名字
 intr_handler idt_table[IDT_DESC_CNT];				// 中断处理程序数组
 extern intr_handler intr_entry_table[IDT_DESC_CNT];	// 中断程序入口地址数组
+extern intr_handler syscall_handler;				// 系统调用入口
 
 static void make_idt_desc(struct gate_desc* p_gdesc, uint8_t attr, intr_handler function)
 {
@@ -41,9 +42,11 @@ static void make_idt_desc(struct gate_desc* p_gdesc, uint8_t attr, intr_handler 
 //初始化idt表
 static void idt_desc_init()
 {
-	int i;
-	for(i=0;i<IDT_DESC_CNT;i++)
+	int i, lastindex = IDT_DESC_CNT - 1;
+	for(i=0;i<0x21;i++)
 		make_idt_desc(&idt[i], IDT_DESC_ATTR_DPL0, intr_entry_table[i]);
+	make_idt_desc(&idt[lastindex], IDT_DESC_ATTR_DPL3, &syscall_handler);			// 单独构建系统调用的中断描述符
+	put_str("   idt_desc_init done\n");
 }
 
 /* 初始化8259A */
