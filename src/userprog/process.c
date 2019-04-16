@@ -49,6 +49,7 @@ void process_activate(const struct task_struct *pthread)
         update_tss_esp(pthread);
 }
 
+/* 创建用户进程页表并返回虚拟地址，以便修改页表项 */
 uint32_t* create_page_dir(void)
 {
     uint32_t *base = (uint32_t*)PAGE_DIR_KERNEL_VADDR;
@@ -81,6 +82,7 @@ void process_execute(void *filename, const char *name, int prio)
     create_user_vaddr_bitmap(user_prog);
     thread_create(user_prog, process_start, filename);
     user_prog->pgdir = create_page_dir();
+    block_desc_init(user_prog->u_block_descs);
 
     enum intr_status old_status = intr_disable();
     ASSERT(!have_elem(&thread_ready_list, &user_prog->general_tag));

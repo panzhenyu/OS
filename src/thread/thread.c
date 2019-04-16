@@ -91,11 +91,12 @@ struct task_struct* thread_start
     init_thread(thread, name, prio);
     thread_create(thread, function, func_arg);
 
+    enum intr_status old_status = intr_disable();
     ASSERT(!have_elem(&thread_ready_list, &thread->general_tag));           // 链表更新已为原子操作，此处不必担心调度影响任务队列更新
     list_append(&thread_ready_list, &thread->general_tag);
     ASSERT(!have_elem(&thread_all_list, &thread->all_list_tag));
     list_append(&thread_all_list, &thread->all_list_tag);
-
+    intr_set_status(old_status);
     return thread;
 }
 
@@ -103,8 +104,10 @@ static void make_main_thread()
 {
     main_thread = running_thread();
     init_thread(main_thread, "main", 31);
+    enum intr_status old_status = intr_disable();
     ASSERT(!have_elem(&thread_all_list, &main_thread->all_list_tag));
     list_append(&thread_all_list, &main_thread->all_list_tag);
+    intr_set_status(old_status);
 }
 
 void schedule()

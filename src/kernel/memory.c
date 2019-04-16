@@ -4,10 +4,11 @@
 #include "string.h"
 #include "global.h"
 #include "thread.h"
+#include "interrupt.h"
 #include "sync.h"
 
 /* 内核主进程栈顶为0xc009f000
- * 将来主进程PCB占用一个页，其基地址为0xc009e000
+ * 内核主进程PCB占用一个页，其基地址为0xc009e000
  * 位图基址从0xc009a000开始，一直到0xc009e000，共四个位图可用 */
 #define MEM_BITMAP_BASE 0xc009a000
 
@@ -17,6 +18,7 @@
 #define PDE_IDX(vaddr) ((vaddr & 0xffc00000) >> 22)	// 返回虚拟地址高十位
 #define PTE_IDX(vaddr) ((vaddr & 0x003ff000) >> 12)	// 返回虚拟地址中间十位
 
+/* 内存池 */
 struct pool
 {
 	struct lock lock;
@@ -25,9 +27,24 @@ struct pool
 	uint32_t pool_size;				// 内存池字节容量
 };
 
-struct pool kernel_pool, user_pool;		// 生成内核内存池与用户内存池
-struct virtual_addr kernel_vaddr;		// 给内核分配虚拟地址
+/* 内存块 */
+struct mem_block
+{
+	struct list_elem free_elem;
+};
 
+struct arena
+{
+	struct mem_block_desc *desc;	// arena绑定的内存块描述符
+	uint32_t cnt;					// large为1时cnt代表页框数，为0时cnt代表空闲的内存块数
+	bool large;
+};
+
+struct mem_block_desc k_block_descs[BLOCK_DESC_CNT];	// 内核内存块描述符组
+struct pool kernel_pool, user_pool;						// 内核内存池与用户内存池
+struct virtual_addr kernel_vaddr;						// 内核虚拟地址池
+
+/* 初始化内核内存池、用户内存池 */
 static void mem_pool_init(uint32_t all_mem)
 {
 	put_str("   mem_pool_init start\n");
@@ -82,22 +99,48 @@ static void mem_pool_init(uint32_t all_mem)
 	put_str("   mem_pool_init done\n");
 }
 
+/* 初始化内存块描述符组 */
+void block_desc_init(struct mem_block_desc* desc_array)
+{
+	if(desc_array == NULL)
+		return;
+	int i, block_size = 16;
+	for(i = 0 ; i < BLOCK_DESC_CNT ; i++)
+	{
+		desc_array[i].block_size = block_size;
+		desc_array[i].blocks_per_arena = (PG_SIZE - sizeof(struct arena)) / block_size;
+		list_init(&desc_array[i].free_list);
+		block_size *= 2;
+	}
+}
+
+/* 初始化内存管理系统 */
 void mem_init()
 {
 	put_str("mem_init start\n");
 	uint32_t mem_bytes_total = (*(uint32_t*)(0xb03));
 	mem_pool_init(mem_bytes_total);
+	block_desc_init(k_block_descs);
 	put_str("mem_init done\n");
 }
 
+/* 获取虚拟地址vaddr的页目录项指针 */
 uint32_t* pde_ptr(uint32_t vaddr)
 {
 	return (uint32_t*)(0xfffff000 + PDE_IDX(vaddr) * 4);
 }
 
+/* 获取虚拟地址vaddr的页表项指针 */
 uint32_t* pte_ptr(uint32_t vaddr)
 {
 	return (uint32_t*)(0xffc00000 + ((vaddr & 0xffc00000) >> 10) + PTE_IDX(vaddr) * 4);
+}
+
+/* 根据当前页表将虚拟地址vaddr转换为对应的物理地址 */
+uint32_t addr_v2p(uint32_t vaddr)
+{
+	uint32_t *pte = pte_ptr(vaddr);
+	return ((*pte & 0xfffff000) | (vaddr & 0x00000fff));
 }
 
 /* 一次申请pg_cnt个虚拟页，申请失败返回NULL，申请成功返回起始虚拟地址 */
@@ -127,7 +170,7 @@ static void* vaddr_get(enum pool_flags pf, uint32_t pg_cnt)
 	return (void*)vaddr_start;
 }
 
-/*一次申请一个物理页，申请失败返回NULL，申请成功返回页的起始物理地址*/
+/* 一次申请一个物理页，申请失败返回NULL，申请成功返回页的起始物理地址 */
 static void* palloc(struct pool* m_pool)
 {
 	lock_acquire(&m_pool->lock);
@@ -140,7 +183,7 @@ static void* palloc(struct pool* m_pool)
 	return (void*)page_phyaddr;
 }
 
-/*用于做虚拟页到物理页的映射*/
+/* 用于做虚拟页到物理页的映射 */
 static void page_table_add(void* _vaddr, void* _page_phyaddr)
 {
 	uint32_t vaddr = (uint32_t)_vaddr, page_phyaddr = (uint32_t)_page_phyaddr;
@@ -237,8 +280,96 @@ bool get_a_page(enum pool_flags pf, uint32_t vaddr)
 	return bit_idx < 0 ? FALSE : TRUE;
 }
 
-uint32_t addr_v2p(uint32_t vaddr)
+/* 返回arena中第idx个内存块的指针 */
+static struct mem_block* arena2block(struct arena *a, uint32_t idx)
 {
-	uint32_t *pte = pte_ptr(vaddr);
-	return ((*pte & 0xfffff000) | (vaddr & 0x00000fff));
+	return (struct mem_block*)((uint32_t)a + sizeof(struct arena) + a->desc->block_size * idx);
+}
+
+/* 返回内存块b所在的arena地址 */
+static struct arena* block2arena(struct mem_block *b)
+{
+	return (struct arena*)((uint32_t)b & 0xFFFFF000);
+}
+
+/* 为进程或线程申请size字节空间，申请成功返回非零首地址，申请失败返回NULL */
+void* sys_malloc(uint32_t size)
+{
+	enum pool_flags pf;
+	struct pool *mem_pool;
+	struct mem_block_desc *descs;
+	struct task_struct *cur = running_thread();
+	if(cur->pgdir == NULL)
+	{
+		pf = PF_KERNEL;
+		mem_pool = &kernel_pool;
+		descs = k_block_descs;
+	}
+	else
+	{
+		pf = PF_USER;
+		mem_pool = &user_pool;
+		descs = cur->u_block_descs;
+	}
+	if(size <= 0 || size > mem_pool->pool_size)
+		return NULL;
+
+	struct arena *a;
+	struct mem_block *b;
+	if(size > 1024)
+	{
+		uint32_t pg_cnt = (size + sizeof(struct arena) - 1) / PG_SIZE + 1;
+		switch(pf)
+		{
+			case PF_KERNEL:
+				a = get_kernel_pages(pg_cnt);
+				break;
+			case PF_USER:
+				a = get_user_pages(pg_cnt);
+				break;
+		}
+		if(!a)
+			return NULL;
+		a->desc = NULL;
+		a->cnt = pg_cnt;
+		a->large = 1;
+		return (void*)(a + 1);
+	}
+	else
+	{
+		uint8_t desc_idx;
+		for(desc_idx = 0 ; desc_idx < BLOCK_DESC_CNT ; desc_idx++)
+			if(descs[desc_idx].block_size >= size)
+				break;
+		if(list_isEmpty(&descs[desc_idx].free_list))
+		{
+			switch(pf)
+			{
+				case PF_KERNEL:
+					a = get_kernel_pages(1);
+					break;
+				case PF_USER:
+					a = get_user_pages(1);
+					break;
+			}
+			if(!a)
+				return NULL;
+			a->desc = &descs[desc_idx];
+			a->cnt = descs[desc_idx].blocks_per_arena;
+			a->large = 0;
+			uint32_t block_idx;
+			// enum intr_status old_status = intr_disable();
+			for(block_idx = 0 ; block_idx < descs[desc_idx].blocks_per_arena ; block_idx++)
+			{
+				b = arena2block(a, block_idx);
+				ASSERT(!have_elem(&descs[desc_idx].free_list, &b->free_elem));
+				list_append(&descs[desc_idx].free_list, &b->free_elem);
+			}
+			// intr_set_status(old_status);
+		}
+		b = elem2entry(struct mem_block, free_elem, list_pop(&descs[desc_idx].free_list));
+		memset(b, 0, descs[desc_idx].block_size);
+		--a->cnt;
+		return (void*)b;
+	}
 }

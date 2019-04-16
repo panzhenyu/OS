@@ -47,7 +47,6 @@ void sema_up(struct semaphore* psema)
 
 void lock_acquire(struct lock* plock)
 {
-    enum intr_status old_status = intr_disable();
     struct task_struct* cur = running_thread();
     if(plock->holder != cur)
     {
@@ -60,12 +59,10 @@ void lock_acquire(struct lock* plock)
     {
         ++plock->holder_repeat_nr;
     }
-    intr_set_status(old_status);
 }
 
 void lock_release(struct lock* plock)
 {
-    enum intr_status old_status = intr_disable();
     if(plock->holder_repeat_nr > 1)
     {
         --plock->holder_repeat_nr;
@@ -75,5 +72,4 @@ void lock_release(struct lock* plock)
     plock->holder = NULL;
     plock->holder_repeat_nr = 0;
     sema_up(&plock->semaphore);
-    intr_set_status(old_status);
 }

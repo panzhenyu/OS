@@ -4,5 +4,6 @@
 #include "stdint.h"
 
 uint32_t getpid();
+uint32_t write(char *str);
 
 #endif
