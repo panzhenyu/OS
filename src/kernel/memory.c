@@ -280,6 +280,33 @@ bool get_a_page(enum pool_flags pf, uint32_t vaddr)
 	return bit_idx < 0 ? FALSE : TRUE;
 }
 
+/* 释放以虚拟地址vaddr为起始地址的连续的pg_cnt个内存页 */
+void free_pages(enum pool_flags pf, uint32_t _vaddr, uint32_t _pg_cnt)
+{
+	// 页基址低12位为0
+	ASSERT((_vaddr & 0x00000FFF) == 0);
+	uint32_t *pte, paddr, bit_idx, vaddr = _vaddr, pg_cnt = _pg_cnt;
+	struct task_struct *cur = running_thread();
+	struct pool *mem_pool = pf == PF_KERNEL ? &kernel_pool : &user_pool;
+	struct virtual_addr *vmem_pool = pf == PF_KERNEL ? &kernel_vaddr : &cur->userprog_vaddr;
+	enum intr_status old_status = intr_disable();
+	while(pg_cnt-- > 0)
+	{
+		pte = pte_ptr(vaddr);
+		paddr = addr_v2p(vaddr);
+		// 释放页表项
+		*pte = *pte & 0xFFFFFFFE;
+		// 释放物理内存
+		bit_idx = (paddr - mem_pool->phy_addr_start) / PG_SIZE;
+		bitmap_set(&mem_pool->pool_bitmap, bit_idx, 0);
+		// 释放虚拟内存
+		bit_idx = (vaddr - vmem_pool->vaddr_start) / PG_SIZE;
+		bitmap_set(&vmem_pool->vaddr_bitmap, bit_idx, 0);
+		vaddr += PG_SIZE;
+	}
+	intr_set_status(old_status);
+}
+
 /* 返回arena中第idx个内存块的指针 */
 static struct mem_block* arena2block(struct arena *a, uint32_t idx)
 {
@@ -362,6 +389,7 @@ void* sys_malloc(uint32_t size)
 			for(block_idx = 0 ; block_idx < descs[desc_idx].blocks_per_arena ; block_idx++)
 			{
 				b = arena2block(a, block_idx);
+				// b块空闲时，前8字节用于存放链表信息
 				ASSERT(!have_elem(&descs[desc_idx].free_list, &b->free_elem));
 				list_append(&descs[desc_idx].free_list, &b->free_elem);
 			}
@@ -369,7 +397,52 @@ void* sys_malloc(uint32_t size)
 		}
 		b = elem2entry(struct mem_block, free_elem, list_pop(&descs[desc_idx].free_list));
 		memset(b, 0, descs[desc_idx].block_size);
+		enum intr_status old_status = intr_disable();
 		--a->cnt;
+		intr_set_status(old_status);
 		return (void*)b;
+	}
+}
+
+void free_arena(enum pool_flags pf, struct arena *a)
+{
+	struct mem_block *b;
+	struct mem_block_desc *desc = a->desc;
+	uint32_t block_idx;
+	enum intr_status old_status = intr_disable();
+	for(block_idx = 0 ; block_idx < desc->blocks_per_arena ; block_idx++)
+	{
+		b = arena2block(a, block_idx);
+		ASSERT(have_elem(&desc->free_list, &b->free_elem));
+		list_remove(&b->free_elem);
+	}
+	free_pages(pf, (uint32_t)a, 1);
+	intr_set_status(old_status);
+}
+
+void sys_free(void *vaddr)
+{
+	enum pool_flags pf;
+	struct arena *a;
+	struct mem_block *b;
+	struct mem_block_desc *desc;
+	struct task_struct *cur = running_thread();
+	if(cur->pgdir == NULL)
+		pf = PF_KERNEL;
+	else
+		pf = PF_USER;
+	b = (struct mem_block*)vaddr;
+	a = block2arena(b);
+	desc = a->desc;
+	if(a->large)
+		free_pages(pf, (uint32_t)vaddr, a->cnt);
+	else
+	{
+		list_append(&desc->free_list, &b->free_elem);
+		enum intr_status old_status = intr_disable();
+		++a->cnt;
+		intr_set_status(old_status);
+		if(a->cnt == desc->blocks_per_arena)
+			free_arena(pf, a);
 	}
 }

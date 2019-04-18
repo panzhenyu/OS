@@ -14,8 +14,12 @@
 
 void k_thread_a(void *arg)
 {
-	console_put_uint32t((uint32_t)sys_malloc(33));
-	console_put_uint32t((uint32_t)sys_malloc(63));
+	int *p;
+	uint32_t *pte;
+	p = (int*)sys_malloc(33);
+	pte = pte_ptr(p);
+	*pte = 0;
+	*p = 1;
 	while(1);
 }
 

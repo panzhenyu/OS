@@ -44,15 +44,16 @@ enum pool_flags
 
 // extern struct pool kernel_pool, user_pool;
 
-
 void mem_init();
 uint32_t* pde_ptr(uint32_t vaddr);
 uint32_t* pte_ptr(uint32_t vaddr);
 void* get_kernel_pages(uint32_t pg_cnt);
 void* get_user_pages(uint32_t pg_cnt);
 bool get_a_page(enum pool_flags pf, uint32_t vaddr);
+void free_pages(enum pool_flags pf, uint32_t _vaddr, uint32_t _pg_cnt);
 uint32_t addr_v2p(uint32_t vaddr);
 void block_desc_init(struct mem_block_desc* desc_array);
 void* sys_malloc(uint32_t size);
+void sys_free(void* vaddr);
 
 #endif
