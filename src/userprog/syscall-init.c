@@ -19,9 +19,6 @@ uint32_t sys_write(char *str)
     return strlen(str);
 }
 
-extern void* sys_malloc(uint32_t size);
-extern void sys_free(void* vaddr);
-
 void syscall_init()
 {
     put_str("syscall_init start\n");

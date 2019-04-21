@@ -14,27 +14,91 @@
 
 void k_thread_a(void *arg)
 {
-	int *p;
-	uint32_t *pte;
-	p = (int*)sys_malloc(33);
-	pte = pte_ptr(p);
-	*pte = 0;
-	*p = 1;
+	void *addr[8];
+	console_put_str(" thread_a start\n");
+	int max = 1000;
+	while(max--)
+	{
+		int size = 128;
+		addr[1] = sys_malloc(size);
+		size *= 2;
+		addr[2] = sys_malloc(size);
+		size *= 2;
+		addr[3] = sys_malloc(size);
+		sys_free(addr[1]);
+		addr[4] = sys_malloc(size);
+		size *= 2; size *= 2; size *= 2; size *= 2;
+		size *= 2; size *= 2; size *= 2;
+		addr[5] = sys_malloc(size);
+		addr[6] = sys_malloc(size);
+		sys_free(addr[5]);
+		size *= 2;
+		addr[7] = sys_malloc(size);
+		sys_free(addr[6]);
+		sys_free(addr[7]);
+		sys_free(addr[2]);
+		sys_free(addr[3]);
+		sys_free(addr[4]);
+	}
+	console_put_str(" thread_a end\n");
 	while(1);
 }
 
-void user_a()
+void k_thread_b(void *arg)
 {
-	write("I am user_a\n");
+	void *addr[10];
+	int max = 1000;
+	console_put_str(" thread_b start\n");
+	while(max--)
+	{
+		int size = 9;
+		addr[1] = sys_malloc(size);
+		size *= 2;
+		addr[2] = sys_malloc(size);
+		size *= 2;
+		sys_free(addr[2]);
+		addr[3] = sys_malloc(size);
+		sys_free(addr[1]);
+		addr[4] = sys_malloc(size);
+		addr[5] = sys_malloc(size);
+		addr[6] = sys_malloc(size);
+		sys_free(addr[5]);
+		size *= 2;
+		addr[7] = sys_malloc(size);
+		sys_free(addr[6]);
+		sys_free(addr[7]);
+		sys_free(addr[3]);
+		sys_free(addr[4]);
+		size *= 2; size *= 2; size *= 2;
+		addr[1] = sys_malloc(size);
+		addr[2] = sys_malloc(size);
+		addr[3] = sys_malloc(size);
+		addr[4] = sys_malloc(size);
+		addr[5] = sys_malloc(size);
+		addr[6] = sys_malloc(size);
+		addr[7] = sys_malloc(size);
+		addr[8] = sys_malloc(size);
+		addr[9] = sys_malloc(size);
+		sys_free(addr[1]);
+		sys_free(addr[2]);
+		sys_free(addr[3]);
+		sys_free(addr[4]);
+		sys_free(addr[5]);
+		sys_free(addr[6]);
+		sys_free(addr[7]);
+		sys_free(addr[8]);
+		sys_free(addr[9]);
+	}
+	console_put_str(" thread_b end\n");
 	while(1);
 }
 
 int main()
 {
 	init_all();
-	thread_start("k_thread_a", 31, k_thread_a, "argA ");
-	// process_execute(user_a, "a", 10);
 	intr_enable();
+	thread_start("k_thread_a", 31, k_thread_a, "I am thread_a");
+	thread_start("k_thread_b", 31, k_thread_b, "I am thread_b");
 	while(1);
 	return 0;
 }

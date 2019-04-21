@@ -5,5 +5,7 @@
 
 uint32_t getpid();
 uint32_t write(char *str);
+void* malloc(uint32_t size);
+void free(void* vaddr);
 
 #endif
