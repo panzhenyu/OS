@@ -2,6 +2,8 @@
 #include "stdio.h"
 #include "global.h"
 #include "string.h"
+/* ---为实现供内核使用的printk，以后删除--- */
+#include "console.h"
 
 typedef char* va_list;
 #define va_start(ap, v) ap = (va_list)&v
@@ -96,4 +98,16 @@ int printf(const char *format, ...)
     vsprintf(buff, format, ap);
     va_end(ap);
     return write(buff);
+}
+
+/* ---供内核使用的printf，以后删除--- */
+int printk(const char *format, ...)
+{
+    char buff[1024] = {0};
+    va_list ap;
+    va_start(ap, format);
+    vsprintf(buff, format, ap);
+    va_end(ap);
+    console_put_str(buff);
+    return strlen(buff);
 }

@@ -14,82 +14,69 @@
 
 void k_thread_a(void *arg)
 {
-	void *addr[8];
-	console_put_str(" thread_a start\n");
-	int max = 1000;
-	while(max--)
-	{
-		int size = 128;
-		addr[1] = sys_malloc(size);
-		size *= 2;
-		addr[2] = sys_malloc(size);
-		size *= 2;
-		addr[3] = sys_malloc(size);
-		sys_free(addr[1]);
-		addr[4] = sys_malloc(size);
-		size *= 2; size *= 2; size *= 2; size *= 2;
-		size *= 2; size *= 2; size *= 2;
-		addr[5] = sys_malloc(size);
-		addr[6] = sys_malloc(size);
-		sys_free(addr[5]);
-		size *= 2;
-		addr[7] = sys_malloc(size);
-		sys_free(addr[6]);
-		sys_free(addr[7]);
-		sys_free(addr[2]);
-		sys_free(addr[3]);
-		sys_free(addr[4]);
-	}
-	console_put_str(" thread_a end\n");
+	void *addr1 = sys_malloc(256);
+	void *addr2 = sys_malloc(255);
+	void *addr3 = sys_malloc(254);
+	console_put_str(" thread_a malloc addr:0x");
+	console_put_uint32t((int)addr1);
+	console_put_char(',');
+	console_put_uint32t((int)addr2);
+	console_put_char(',');
+	console_put_uint32t((int)addr3);
+	console_put_char('\n');
+	int cpu_delay = 10000000;
+	while(cpu_delay--);
+	sys_free(addr1);
+	sys_free(addr2);
+	sys_free(addr3);
 	while(1);
 }
 
 void k_thread_b(void *arg)
 {
-	void *addr[10];
-	int max = 1000;
-	console_put_str(" thread_b start\n");
-	while(max--)
-	{
-		int size = 9;
-		addr[1] = sys_malloc(size);
-		size *= 2;
-		addr[2] = sys_malloc(size);
-		size *= 2;
-		sys_free(addr[2]);
-		addr[3] = sys_malloc(size);
-		sys_free(addr[1]);
-		addr[4] = sys_malloc(size);
-		addr[5] = sys_malloc(size);
-		addr[6] = sys_malloc(size);
-		sys_free(addr[5]);
-		size *= 2;
-		addr[7] = sys_malloc(size);
-		sys_free(addr[6]);
-		sys_free(addr[7]);
-		sys_free(addr[3]);
-		sys_free(addr[4]);
-		size *= 2; size *= 2; size *= 2;
-		addr[1] = sys_malloc(size);
-		addr[2] = sys_malloc(size);
-		addr[3] = sys_malloc(size);
-		addr[4] = sys_malloc(size);
-		addr[5] = sys_malloc(size);
-		addr[6] = sys_malloc(size);
-		addr[7] = sys_malloc(size);
-		addr[8] = sys_malloc(size);
-		addr[9] = sys_malloc(size);
-		sys_free(addr[1]);
-		sys_free(addr[2]);
-		sys_free(addr[3]);
-		sys_free(addr[4]);
-		sys_free(addr[5]);
-		sys_free(addr[6]);
-		sys_free(addr[7]);
-		sys_free(addr[8]);
-		sys_free(addr[9]);
-	}
-	console_put_str(" thread_b end\n");
+	void *addr1 = sys_malloc(256);
+	void *addr2 = sys_malloc(255);
+	void *addr3 = sys_malloc(254);
+	console_put_str(" thread_a malloc addr:0x");
+	console_put_uint32t((int)addr1);
+	console_put_char(',');
+	console_put_uint32t((int)addr2);
+	console_put_char(',');
+	console_put_uint32t((int)addr3);
+	console_put_char('\n');
+	int cpu_delay = 10000000;
+	while(cpu_delay--);
+	sys_free(addr1);
+	sys_free(addr2);
+	sys_free(addr3);
+	while(1);
+}
+
+void u_prog_a()
+{
+	void *addr1 = malloc(256);
+	void *addr2 = malloc(255);
+	void *addr3 = malloc(254);
+	printf(" prog_a malloc addr:0x%x, 0x%x, 0x%x\n", (int)addr1, (int)addr2, (int)addr3);
+	int cpu_delay = 10000000;
+	while(cpu_delay--);
+	free(addr1);
+	free(addr2);
+	free(addr3);
+	while(1);
+}
+
+void u_prog_b()
+{
+	void *addr1 = malloc(256);
+	void *addr2 = malloc(255);
+	void *addr3 = malloc(254);
+	printf(" prog_a malloc addr:0x%x, 0x%x, 0x%x\n", (int)addr1, (int)addr2, (int)addr3);
+	int cpu_delay = 10000000;
+	while(cpu_delay--);
+	free(addr1);
+	free(addr2);
+	free(addr3);
 	while(1);
 }
 
@@ -98,7 +85,9 @@ int main()
 	init_all();
 	intr_enable();
 	thread_start("k_thread_a", 31, k_thread_a, "I am thread_a");
-	thread_start("k_thread_b", 31, k_thread_b, "I am thread_b");
+	thread_start("k_thread_a", 31, k_thread_b, "I am thread_b");
+	process_execute(u_prog_a, "u_prog_a", 31);
+	process_execute(u_prog_b, "u_prog_b", 31);
 	while(1);
 	return 0;
 }

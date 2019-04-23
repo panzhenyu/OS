@@ -43,7 +43,7 @@ static void make_idt_desc(struct gate_desc* p_gdesc, uint8_t attr, intr_handler 
 static void idt_desc_init()
 {
 	int i, lastindex = IDT_DESC_CNT - 1;
-	for(i=0;i<0x21;i++)
+	for(i=0;i<IDT_DESC_CNT;i++)
 		make_idt_desc(&idt[i], IDT_DESC_ATTR_DPL0, intr_entry_table[i]);
 	make_idt_desc(&idt[lastindex], IDT_DESC_ATTR_DPL3, &syscall_handler);			// 单独构建系统调用的中断描述符
 	put_str("   idt_desc_init done\n");
@@ -67,8 +67,8 @@ static void pic_init()
 	outb(PIC_S_DATA, 0x01);			// ICW4: 8086模式，正常EOI
 
 	//打开部分中断
-	outb(PIC_M_DATA, 0xfc);
-	outb(PIC_S_DATA, 0xff);
+	outb(PIC_M_DATA, 0xf8);
+	outb(PIC_S_DATA, 0xbf);
 
 	put_str("   pic_init done\n");
 }

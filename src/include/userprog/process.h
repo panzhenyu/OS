@@ -4,7 +4,7 @@
 #include "thread.h"
 
 #define USER_STACK3_VADDR (0xc0000000 - 0x1000)
-#define USER_VADDR_START 0x00000000
+#define USER_VADDR_START 0x08048000
 
 void process_start(void *filename_);
 void process_activate(const struct task_struct *pthread);
