@@ -6,6 +6,8 @@ CC = gcc
 LD = ld
 LIB =	-I include/lib/ -I include/lib/kernel/ -I include/lib/user/ -I include/kernel/\
 		-I include/device/ -I include/thread -I include/userprog -I include/user
+INCLUDES =	include/lib* include/lib/kernel/* include/lib/user/* include/kernel/*\
+			include/device/* include/thread/* include/userprog/* include/user/*
 GLOBAL_HEADER = include/lib/stdint.h include/kernel/global.h
 ASFLAGS = -f elf32 
 CFLAGS = -Wall $(LIB) -c -m32 -fno-builtin
@@ -15,7 +17,7 @@ OBJS =	$(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/console.o $(BUILD_DI
 		$(BUILD_DIR)/memory.o $(BUILD_DIR)/thread.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/switch.o\
 		$(BUILD_DIR)/tss.o $(BUILD_DIR)/print.o $(BUILD_DIR)/debug.o $(BUILD_DIR)/bitmap.o\
 		$(BUILD_DIR)/string.o $(BUILD_DIR)/list.o $(BUILD_DIR)/sync.o $(BUILD_DIR)/syscall.o\
-		$(BUILD_DIR)/syscall-init.o $(BUILD_DIR)/stdio.o
+		$(BUILD_DIR)/syscall-init.o $(BUILD_DIR)/stdio.o $(BUILD_DIR)/ide.o
 
 ## build c code
 $(BUILD_DIR)/main.o: kernel/main.c $(GLOBAL_HEADER)\
@@ -137,6 +139,9 @@ $(BUILD_DIR)/stdio.o: lib/user/stdio.c $(GLOBAL_HEADER)\
 	include/lib/string.h\
 	include/lib/user/stdio.h\
 	include/user/syscall.h
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/ide.o: device/ide.c $(INCLUDES)
 	$(CC) $(CFLAGS) $< -o $@
 
 ## build asm code

@@ -12,13 +12,16 @@
 
 #define PG_SIZE 4096
 
-struct task_struct* main_thread;
-struct list thread_ready_list;
-struct list thread_all_list;
+struct task_struct *main_thread;    // 主线程
+struct task_struct *idle_thread;    // idel线程
+struct list thread_ready_list;      // 所有线程的队列
+struct list thread_all_list;        // 就绪线程队列
 static struct list_elem* thread_tag;
 
+/* 线程切换函数 */
 extern void switch_to(struct task_struct* cur, struct task_struct* next);
 
+/* 获取运行线程PCB指针 */
 struct task_struct* running_thread()
 {
     uint32_t esp;
@@ -26,9 +29,9 @@ struct task_struct* running_thread()
     return (struct task_struct*)(esp & 0xfffff000);
 }
 
-
+/* 获取进程pid*/
 struct lock pid_lock;           // pid锁
-static pid_t allocate_pid(void)
+static pid_t allocate_pid()
 {
     static pid_t next_pid = 0;
     lock_acquire(&pid_lock);
@@ -37,6 +40,7 @@ static pid_t allocate_pid(void)
     return next_pid;
 }
 
+/* 线程入口函数 */
 static void kernel_thread(thread_func* function, void* func_arg)
 {
     // intr_enable();
@@ -48,6 +52,7 @@ static void kernel_thread(thread_func* function, void* func_arg)
 //     while(1);
 // }
 
+/* 创建线程上下文环境 */
 void thread_create(struct task_struct* pthread, thread_func function, void* func_arg)
 {
     pthread->self_kstack -= sizeof(struct intr_stack);          // 预留中断使用栈的空间，供用户进程使用
@@ -79,6 +84,7 @@ void init_thread(struct task_struct* pthread, const char* name, int prio)
     pthread->stack_magic = 0x19870916;
 }
 
+/* 创建一个线程，并将其加入就绪队列 */
 struct task_struct* thread_start
 (
     const char* name,
@@ -100,6 +106,7 @@ struct task_struct* thread_start
     return thread;
 }
 
+/* 设置当前线程为主线程 */
 static void make_main_thread()
 {
     main_thread = running_thread();
@@ -110,6 +117,7 @@ static void make_main_thread()
     intr_set_status(old_status);
 }
 
+/* 线程、进程调度函数，若不是因时间片用完而调度，需要在阻塞函数中给出线程状态 */
 void schedule()
 {
     ASSERT(intr_get_status() == INTR_OFF);
@@ -124,11 +132,12 @@ void schedule()
     }
     else
     {
-        // 任务需等待某时间发生后才能继续上cpu执行
+        // 任务需等待某事件发生后才能继续上cpu执行
         ASSERT(!have_elem(&thread_ready_list, &cur->general_tag));
         cur->ticks = cur->priority;
     }
-    ASSERT(!list_isEmpty(&thread_ready_list));
+    if(list_isEmpty(&thread_ready_list))
+        thread_unblock(idle_thread);
     thread_tag = NULL;
     thread_tag = list_pop(&thread_ready_list);
     struct task_struct* next = elem2entry(struct task_struct, general_tag, thread_tag);
@@ -168,6 +177,26 @@ void thread_unblock(struct task_struct* pthread)
     intr_set_status(old_status);
 }
 
+/* 主动让出cpu资源 */
+void thread_yield()
+{
+    enum intr_status old_status = intr_disable();
+    struct task_struct *cur = running_thread();
+    cur->status = TASK_READY;
+    schedule();
+    intr_set_status(old_status);
+}
+
+static void idle(void *arg)
+{
+    while(1)
+    {
+        thread_block(TASK_BLOCKED);
+        // 执行hlt之前用sti开中断，确保可被外部中断唤醒
+        asm volatile ("sti; hlt" ::: "memory");
+    }
+}
+
 void thread_init()
 {
     put_str("thread_init start\n");
@@ -175,5 +204,6 @@ void thread_init()
     list_init(&thread_all_list);
     lock_init(&pid_lock);
     make_main_thread();
+    idle_thread = thread_start("idle", 10, idle, NULL);
     put_str("thread_init done\n");
 }

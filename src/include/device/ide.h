@@ -8,6 +8,7 @@
 
 #define MAX_PRIM_PARTS 4
 #define MAX_LOGIC_PARTS 8
+#define BYTES_PER_SECTOR 512
 
 struct partition
 {
@@ -25,7 +26,7 @@ struct partition
 struct disk
 {
     char name[8];                                   // 硬盘名称
-    struct ide_charnnel *my_channel;                // 硬盘归属的ide通道
+    struct ide_channel *my_channel;                 // 硬盘归属的ide通道
     uint8_t dev_no;                                 // 主盘为0，从盘为1
     struct partition prim_parts[MAX_PRIM_PARTS];    // 主分区，最多4个
     struct partition logic_parts[MAX_LOGIC_PARTS];  // 逻辑分区，最多8个
@@ -41,4 +42,9 @@ struct ide_channel
     struct semaphore disk_done;     // 用于阻塞、唤醒驱动程序
     struct disk devices[2];         // 一个通道上连接主盘和从盘
 };
+
+void ide_read(struct disk *hd, uint32_t lba, void *buff, uint32_t sec_cnt);
+void ide_write(struct disk *hd, uint32_t lba, void *buff, uint32_t sec_cnt);
+void ide_init();
+
 #endif

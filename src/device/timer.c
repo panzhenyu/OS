@@ -6,6 +6,7 @@
 #include "thread.h"
 
 #define IRQ0_FREQUENCY		100
+#define m_seconds_per_intr	(1000 / IRQ0_FREQUENCY)
 #define INPUT_FREQUENCY		1193180
 #define COUNTER0_VALUE		INPUT_FREQUENCY / IRQ0_FREQUENCY
 #define COUNTER0_PORT		0x40
@@ -41,6 +42,22 @@ static void intr_timer_handler()
 		schedule();
 	else
 		--cur_thread->ticks;
+}
+
+/* 睡眠sleep_ticks个系统时间 */
+static void ticks_to_sleep(uint32_t sleep_ticks)
+{
+	// ticks需连续运行一年以上才会溢出
+	uint32_t start_tick = ticks;
+	while(ticks - start_tick < sleep_ticks)
+		thread_yield();
+}
+
+/* 睡眠m_seconds毫秒 */
+void mtime_sleep(uint32_t m_seconds)
+{
+	uint32_t sleep_ticks = m_seconds % m_seconds_per_intr ? m_seconds/m_seconds_per_intr : m_seconds/m_seconds_per_intr + 1;
+	ticks_to_sleep(sleep_ticks);
 }
 
 void timer_init()
