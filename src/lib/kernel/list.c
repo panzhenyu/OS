@@ -56,7 +56,7 @@ void list_remove(const struct list_elem* elem)
     {
         elem->prev->next = elem->next;
         elem->next->prev = elem->prev;
-        intr_enable(old_status);
+        intr_set_status(old_status);
     }
 }
 

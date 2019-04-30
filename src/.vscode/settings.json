@@ -21,6 +21,7 @@
         "tss.h": "c",
         "syscall.h": "c",
         "stdio.h": "c",
-        "timer.h": "c"
+        "timer.h": "c",
+        "syscall-init.h": "c"
     }
 }

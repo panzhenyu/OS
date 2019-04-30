@@ -6,6 +6,12 @@
 #include "sync.h"
 #include "bitmap.h"
 
+/* 分区表字段意义 */
+#define BOOTABLE 0x80
+#define NO_BOOTABLE 0
+#define FS_INVALID 0
+#define FS_EXTENDED 5
+
 #define MAX_PRIM_PARTS 4
 #define MAX_LOGIC_PARTS 8
 #define BYTES_PER_SECTOR 512

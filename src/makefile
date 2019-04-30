@@ -20,22 +20,10 @@ OBJS =	$(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/console.o $(BUILD_DI
 		$(BUILD_DIR)/syscall-init.o $(BUILD_DIR)/stdio.o $(BUILD_DIR)/ide.o
 
 ## build c code
-$(BUILD_DIR)/main.o: kernel/main.c $(GLOBAL_HEADER)\
-	include/lib/kernel/print.h\
-	include/kernel/init.h include/kernel/debug.h include/kernel/interrupt.h\
-	include/thread/thread.h include/thread/sync.h\
-	include/device/console.h include/device/ioqueue.h\
-	include/userprog/process.h include/userprog/syscall-init.h\
-	include/user/syscall.h\
-	include/lib/user/stdio.h
+$(BUILD_DIR)/main.o: kernel/main.c $(INCLUDES)
 	$(CC) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/init.o: kernel/init.c $(GLOBAL_HEADER)\
-	include/lib/kernel/print.h\
-	include/userprog/tss.h include/userprog/syscall-init.h\
-	include/kernel/init.h include/kernel/interrupt.h\
-	include/thread/thread.h\
-	include/device/timer.h include/device/console.h include/device/keyboard.h
+$(BUILD_DIR)/init.o: kernel/init.c $(INCLUDES)
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/interrupt.o: kernel/interrupt.c $(GLOBAL_HEADER)\

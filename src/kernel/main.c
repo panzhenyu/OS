@@ -84,10 +84,10 @@ int main()
 {
 	init_all();
 	intr_enable();
-	thread_start("k_thread_a", 31, k_thread_a, "I am thread_a");
-	thread_start("k_thread_a", 31, k_thread_b, "I am thread_b");
-	process_execute(u_prog_a, "u_prog_a", 31);
-	process_execute(u_prog_b, "u_prog_b", 31);
+	// thread_start("k_thread_a", 31, k_thread_a, "I am thread_a");
+	// thread_start("k_thread_a", 31, k_thread_b, "I am thread_b");
+	// process_execute(u_prog_a, "u_prog_a", 31);
+	// process_execute(u_prog_b, "u_prog_b", 31);
 	while(1);
 	return 0;
 }
