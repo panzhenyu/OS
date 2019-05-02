@@ -194,6 +194,7 @@ static void swap_pairs_bytes(const char *dst, char *buff, uint32_t len)
 
 }
 
+/* 读取硬盘hd的信息 */
 static void identify_disk(struct disk *hd)
 {
     char id_info[512];
@@ -207,10 +208,14 @@ static void identify_disk(struct disk *hd)
         PANIC(error);
     }
     read_from_sector(hd, id_info, 1);
+    uint32_t sectors = *(uint32_t*)&id_info[60*2];
+    printk("SECTORS: %d\n", sectors);
+    printk("CAPACITY: %dMB\n", sectors * 512 / 1024 / 1024);
+    hd->sectors = sectors;
 }
 
-/* 扫描硬盘hd中地址为ext_lba扇区中的所有分区，总扩展分区起始lba不为0时，表明此函数正在扫描子
-   扩展分区，扫描分区前，需要给出被扫描分区上一级的起始lba地址，并将其存放于ext_lba_base中 */
+/* 扫描硬盘hd中地址为ext_lba扇区中的所有分区，总扩展分区起始lba不为0时，表明此函数正在扫描子扩展分区，扫描分区前，需要给
+   出被扫描分区上一级的起始lba地址，并将其存放于ext_lba_base中，此函数只扫描可识别的分区，并将其链入partition_list */
 static void partition_scan(struct disk *hd, uint32_t ext_lba)
 {
     struct boot_sector *bs = (struct boot_sector*)sys_malloc(sizeof(struct boot_sector));
@@ -218,7 +223,6 @@ static void partition_scan(struct disk *hd, uint32_t ext_lba)
     uint8_t i;
     struct partition_table_entry *p = bs->partition_table;
     struct partition *part = ext_lba_base == 0 ? hd->prim_parts : hd->logic_parts;
-    uint32_t lba_base = ext_lba_base;       // 上一级分区起始lba地址
     // 对该分区表的每个表项遍历
     for(i = 0 ; i < 4 ; ++i, ++p)
     {
@@ -242,7 +246,7 @@ static void partition_scan(struct disk *hd, uint32_t ext_lba)
         // 分区的起始lba等于lba偏移量+上一级分区的起始lba地址
         if(ext_lba_base == 0)
         {
-            part[p_no].start_lba =  p->start_lba + lba_base;
+            part[p_no].start_lba =  p->start_lba + ext_lba;
             part[p_no].sec_cnt = p->sec_cnt;
             part[p_no].my_disk = hd;
             if(!have_elem(&partition_list, &part[p_no].part_tag))
@@ -253,7 +257,7 @@ static void partition_scan(struct disk *hd, uint32_t ext_lba)
         }
         else
         {
-            part[l_no].start_lba =  p->start_lba + lba_base;
+            part[l_no].start_lba =  p->start_lba + ext_lba;
             part[l_no].sec_cnt = p->sec_cnt;
             part[l_no].my_disk = hd;
             if(!have_elem(&partition_list, &part[l_no].part_tag))
@@ -272,11 +276,11 @@ static void partition_scan(struct disk *hd, uint32_t ext_lba)
 static bool partition_info(struct list_elem *elem, int arg __attribute__((unused)))
 {
     struct partition *part = elem2entry(struct partition, part_tag, elem);
-    printk("   %s start_lba:0x%x, sec_cnt:0x%x\n", part->name, part->start_lba, part->sec_cnt);
+    printk("   %s start_lba:%d, sec_cnt:%d\n", part->name, part->start_lba, part->sec_cnt);
     return FALSE;
 }
 
-/* 初始化硬盘信息 */
+/* 初始化通道的硬盘信息 */
 static void disk_init(struct disk *hd, struct ide_channel *channel, uint8_t cnt)
 {
     int i;
@@ -288,6 +292,7 @@ static void disk_init(struct disk *hd, struct ide_channel *channel, uint8_t cnt)
         // 由于总扩展分区起始lba为全局变量，每次扫描分区时需重置
         p_no = l_no = ext_lba_base = 0;
         partition_scan(&hd[i], 0);
+        identify_disk(&hd[i]);
         d_no++;
     }
 }
