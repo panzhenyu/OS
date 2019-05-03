@@ -19,6 +19,8 @@
 #define SECTOR_SIZE 512             // 扇区字节大小
 #define BLOCK_SIZE 4096             // 块字节大小
 #define FS_MY_MAGIC 0x19590318      // 本文件系统魔数
+#define SUPER_BLOCK_OFFSET 1        // 超级块在分区中的偏移扇区
+#define SUPER_BLOCK_SECTS 1         // 超级块所占的扇区数
 
 /* 文件类型 */
 enum file_types

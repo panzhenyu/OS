@@ -3,11 +3,14 @@
 #include "dir.h"
 #include "inode.h"
 #include "print.h"
+#include "debug.h"
 #include "string.h"
 #include "super_block.h"
 #include "syscall-init.h"
 
 #define SECTOR_PER_BLOCK (BLOCK_SIZE / SECTOR_SIZE)     // 每块包含的扇区数
+
+struct partition *cur_part;
 
 /* 格式化分区 */
 static void partition_format(struct partition *part)
@@ -140,6 +143,42 @@ static void partition_format(struct partition *part)
     sys_free(buff);
 }
 
+/* 将分区名为arg的分区挂载到默认分区cur_part */
+static bool mount_partition(struct list_elem *elem, int arg)
+{
+    struct partition *part = elem2entry(struct partition, part_tag, elem);
+    if(strcmp(part->name, (char*)arg) != 0)
+        return FALSE;
+
+    cur_part = part;
+    struct disk *hd = cur_part->my_disk;
+    struct super_block *sb_buff = (struct super_block*)sys_malloc(SUPER_BLOCK_SECTS * SECTOR_SIZE);
+    cur_part->sb = (struct super_block*)sys_malloc(sizeof(struct super_block));
+    if(cur_part->sb == NULL)
+        PANIC("mount_partition: alloc memory failed!\n");
+    ide_read(cur_part->my_disk, cur_part->start_lba + SUPER_BLOCK_OFFSET, sb_buff, SUPER_BLOCK_SECTS);
+    memcpy(cur_part->sb, sb_buff, sizeof(struct super_block));      // 复制超级块信息
+
+    list_init(&cur_part->open_inodes);                              // 初始化打开的inode队列
+
+    // 初始化块位图与inode位图，注意bitmap_init只负责将位图内容清零
+    cur_part->block_bitmap.btmp_bytes_len = sb_buff->block_bitmap_sects * SECTOR_SIZE;
+    cur_part->block_bitmap.bits = (uint8_t*)sys_malloc(cur_part->block_bitmap.btmp_bytes_len);
+    if(cur_part->block_bitmap.bits == NULL)
+        PANIC("mount_partition: alloc memory failed!\n");
+    ide_read(hd, sb_buff->block_bitmap_lba, cur_part->block_bitmap.bits, sb_buff->block_bitmap_sects);
+
+    cur_part->inode_bitmap.btmp_bytes_len = sb_buff->inode_bitmap_sects * SECTOR_SIZE;
+    cur_part->inode_bitmap.bits = (uint8_t*)sys_malloc(cur_part->inode_bitmap.btmp_bytes_len);
+    if(cur_part->inode_bitmap.bits == NULL)
+        PANIC("mount_partition: alloc memory failed!\n");
+    ide_read(hd, sb_buff->inode_bitmap_lba, cur_part->inode_bitmap.bits, sb_buff->inode_bitmap_sects);
+
+    printk("mount %s done!\n", cur_part->name);
+    sys_free(sb_buff);
+    return TRUE;
+}
+
 void fs_init()
 {
     // 扫描每个分区，如果已存在
@@ -164,5 +203,6 @@ void fs_init()
         }
         list_append(&partition_list, elem);
     }
+    list_traversal(&partition_list, mount_partition, (int)"sdb1");
     sys_free(sb);
 }
