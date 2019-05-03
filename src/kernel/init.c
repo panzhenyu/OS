@@ -9,6 +9,7 @@
 #include "tss.h"
 #include "ide.h"
 #include "syscall-init.h"
+#include "fs.h"
 
 void init_all()
 {
@@ -22,4 +23,5 @@ void init_all()
 	tss_init();
 	syscall_init();
 	ide_init();
+	fs_init();
 }

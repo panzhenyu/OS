@@ -189,11 +189,6 @@ void ide_write(struct disk *hd, uint32_t lba, void *buff, uint32_t sec_cnt)
     lock_release(&channel->lock);
 }
 
-static void swap_pairs_bytes(const char *dst, char *buff, uint32_t len)
-{
-
-}
-
 /* 读取硬盘hd的信息 */
 static void identify_disk(struct disk *hd)
 {

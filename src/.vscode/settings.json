@@ -22,6 +22,9 @@
         "syscall.h": "c",
         "stdio.h": "c",
         "timer.h": "c",
-        "syscall-init.h": "c"
+        "syscall-init.h": "c",
+        "ide.h": "c",
+        "fs.h": "c",
+        "super_block.h": "c"
     }
 }

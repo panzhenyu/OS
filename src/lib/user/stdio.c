@@ -54,8 +54,6 @@ uint32_t vsprintf(char *str, const char *format, va_list ap)
                         *str++ = '-';
                         var = ~var + 1;
                     }
-                    *str++ = '0';
-                    *str++ = 'x';
                     itoa(var, &str, 16);
                     break;
                 case 'c':

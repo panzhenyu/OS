@@ -2,12 +2,14 @@
 #define _LIB_KERNEL_BITMAP_H
 
 #include "global.h"
+
 #define BITMAP_MASK 1
+#define DIV_ROUND_UP(a, b) ((a) % (b) == 0 ? (a) / (b) : (a) / (b) + 1)
 
 struct bitmap
 {
-	uint32_t btmp_bytes_len;
-	uint8_t* bits;				// 字节指针
+	uint32_t btmp_bytes_len;	// 位图字节数
+	uint8_t* bits;				// 位图
 };
 
 void bitmap_init(struct bitmap* btmp);									// 初始化位图，0表未占用

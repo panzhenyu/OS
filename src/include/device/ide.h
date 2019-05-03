@@ -50,6 +50,8 @@ struct ide_channel
     struct disk devices[2];         // 一个通道上连接主盘和从盘
 };
 
+extern struct list partition_list;  // 分区队列
+
 void ide_read(struct disk *hd, uint32_t lba, void *buff, uint32_t sec_cnt);
 void ide_write(struct disk *hd, uint32_t lba, void *buff, uint32_t sec_cnt);
 void ide_init();
