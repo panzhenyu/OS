@@ -1,2 +1,2 @@
 # OS
-used for learning operation system
+used for learning operating system
