@@ -1,5 +1,7 @@
 BUILD_DIR = ./build
-HD = /home/panda/Desktop/bochs/disk/hd60M.img
+BOCHS_BIN_DIR = /mnt/d/program/Bochs-2.6.11
+BOCHS_CFG_DIR = ../vm/bochs
+HD = ${BOCHS_CFG_DIR}/hd60M.img
 ENTRY_POINT = 0xc0001500
 AS = nasm
 CC = gcc
@@ -11,7 +13,7 @@ INCLUDES =	include/lib* include/lib/kernel/* include/lib/user/* include/kernel/*
 			include/device/* include/thread/* include/userprog/* include/user/*				\
 			include/fs/*
 ASFLAGS = -f elf32
-CFLAGS = -Wall $(LIB) -c -m32 -fno-builtin
+CFLAGS = -Wall $(LIB) -c -m32 -fno-builtin -fno-stack-protector
 LDFLAGS = -m elf_i386 -Ttext $(ENTRY_POINT) -e main -Map $(BUILD_DIR)/kernel.map
 OBJS =	$(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/console.o $(BUILD_DIR)/keyboard.o			\
 		$(BUILD_DIR)/timer.o $(BUILD_DIR)/ioqueue.o $(BUILD_DIR)/process.o $(BUILD_DIR)/interrupt.o		\
@@ -128,5 +130,10 @@ clean:
 	cd $(BUILD_DIR) && rm -f ./*
 
 build: $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/mbr.bin $(BUILD_DIR)/loader.bin
+
+run:
+	${BOCHS_BIN_DIR}/bochs.exe -f ${BOCHS_CFG_DIR}/bochsrc.win
+debug:
+	${BOCHS_BIN_DIR}/bochsdbg.exe -f ${BOCHS_CFG_DIR}/bochsrc.win
 
 all: mk_dir build hd

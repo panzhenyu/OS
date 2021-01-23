@@ -14,42 +14,44 @@
 
 void k_thread_a(void *arg)
 {
-	void *addr1 = sys_malloc(256);
-	void *addr2 = sys_malloc(255);
-	void *addr3 = sys_malloc(254);
-	console_put_str(" thread_a malloc addr:0x");
-	console_put_uint32t((int)addr1);
-	console_put_char(',');
-	console_put_uint32t((int)addr2);
-	console_put_char(',');
-	console_put_uint32t((int)addr3);
-	console_put_char('\n');
-	int cpu_delay = 10000000;
-	while(cpu_delay--);
-	sys_free(addr1);
-	sys_free(addr2);
-	sys_free(addr3);
-	while(1);
+	while (1) {
+		void *addr1 = sys_malloc(256);
+		void *addr2 = sys_malloc(255);
+		void *addr3 = sys_malloc(254);
+		console_put_str(" thread_a malloc addr:0x");
+		console_put_uint32t((int)addr1);
+		console_put_char(',');
+		console_put_uint32t((int)addr2);
+		console_put_char(',');
+		console_put_uint32t((int)addr3);
+		console_put_char('\n');
+		int cpu_delay = 10000000;
+		while(cpu_delay--);
+		sys_free(addr1);
+		sys_free(addr2);
+		sys_free(addr3);
+	}
 }
 
 void k_thread_b(void *arg)
 {
-	void *addr1 = sys_malloc(256);
-	void *addr2 = sys_malloc(255);
-	void *addr3 = sys_malloc(254);
-	console_put_str(" thread_a malloc addr:0x");
-	console_put_uint32t((int)addr1);
-	console_put_char(',');
-	console_put_uint32t((int)addr2);
-	console_put_char(',');
-	console_put_uint32t((int)addr3);
-	console_put_char('\n');
-	int cpu_delay = 10000000;
-	while(cpu_delay--);
-	sys_free(addr1);
-	sys_free(addr2);
-	sys_free(addr3);
-	while(1);
+	while (1) {
+		void *addr1 = sys_malloc(256);
+		void *addr2 = sys_malloc(255);
+		void *addr3 = sys_malloc(254);
+		console_put_str(" thread_b malloc addr:0x");
+		console_put_uint32t((int)addr1);
+		console_put_char(',');
+		console_put_uint32t((int)addr2);
+		console_put_char(',');
+		console_put_uint32t((int)addr3);
+		console_put_char('\n');
+		int cpu_delay = 10000000;
+		while(cpu_delay--);
+		sys_free(addr1);
+		sys_free(addr2);
+		sys_free(addr3);
+	}
 }
 
 void u_prog_a()
@@ -84,10 +86,11 @@ int main()
 {
 	init_all();
 	intr_enable();
-	// thread_start("k_thread_a", 31, k_thread_a, "I am thread_a");
-	// thread_start("k_thread_a", 31, k_thread_b, "I am thread_b");
-	// process_execute(u_prog_a, "u_prog_a", 31);
-	// process_execute(u_prog_b, "u_prog_b", 31);
+	console_put_str("begin\n");
+	thread_start("k_thread_a", 31, k_thread_a, "I am thread_a");
+	thread_start("k_thread_b", 31, k_thread_b, "I am thread_b");
+	process_execute(u_prog_a, "u_prog_a", 31);
+	process_execute(u_prog_b, "u_prog_b", 31);
 	while(1);
 	return 0;
 }

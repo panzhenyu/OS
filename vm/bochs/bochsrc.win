@@ -1,0 +1,21 @@
+# choose the boot disk.
+boot: disk
+
+# how much memory the emulated machine will have
+megs: 64
+
+# filename of ROM images
+romimage: file=D:\program\Bochs-2.6.11\BIOS-bochs-latest
+vgaromimage: file=D:\program\Bochs-2.6.11\VGABIOS-lgpl-latest
+
+# where do we send log messages?
+log: D:\project\OS\vm\bochs\bochslog_win.txt
+
+# mouse and keyboard settings
+mouse: enabled=0
+keyboard:keymap=D:\program\Bochs-2.6.11\keymaps\x11-pc-us.map
+
+# hard disk
+ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
+ata0-master: type=disk, path=D:\project\OS\vm\bochs\hd60M.img
+ata0-slave: type=disk, path=D:\project\OS\vm\bochs\hd80M.img

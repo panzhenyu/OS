@@ -43,7 +43,8 @@ static pid_t allocate_pid()
 /* 线程入口函数 */
 static void kernel_thread(thread_func* function, void* func_arg)
 {
-    // intr_enable();
+    // 这里打开中断很关键，内核线程第一次被调度时，并不是处于退出中断的状态，不会通过退出中断的一系列pop操作修正中断标志位
+    intr_enable();
     function(func_arg);
 }
 
