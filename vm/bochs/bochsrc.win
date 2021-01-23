@@ -17,5 +17,5 @@ keyboard:keymap=D:\program\Bochs-2.6.11\keymaps\x11-pc-us.map
 
 # hard disk
 ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
-ata0-master: type=disk, path=D:\project\OS\vm\bochs\hd60M.img
-ata0-slave: type=disk, path=D:\project\OS\vm\bochs\hd80M.img
+ata0-master: type=disk, path=D:\project\OS\vm\bochs\disk\hd60M.img
+ata0-slave: type=disk, path=D:\project\OS\vm\bochs\disk\hd80M.img
